@@ -30,3 +30,9 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+
+Role	Email	Password	Notes
+Admin (Tenant Admin)	admin@example.com	Admin123!	From .env.development's SEED_ADMIN_* vars — owns the "Fix My Ride" tenant
+Owner	owner@example.com	Owner123!	Has 3 sample vehicles (Toyota Camry, Honda Civic, Tesla Model 3) with service history
+Staff / Technician	technician@example.com	Technician123!	Role: Technician, assigned to "Main Service Center"
