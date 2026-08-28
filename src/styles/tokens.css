@@ -1,0 +1,228 @@
+/* ============================================================
+ * Design tokens — single source of truth.
+ *
+ * Two layers:
+ *   1. Primitives  — raw color/value ramps, never used directly by components.
+ *   2. Semantic    — what components/Tailwind utilities actually consume,
+ *                    swapped live via data-* attributes on <html>.
+ *
+ * theme.css maps a subset of these into Tailwind's @theme namespace so
+ * components can use plain utilities (bg-surface, rounded-card, font-display)
+ * that stay theme/shape/density/font-aware automatically.
+ * ============================================================ */
+
+:root {
+  /* ---- neutral ramp: cool-grey bias, chosen not inherited ---- */
+  --n0: #ffffff;
+  --n50: #f4f5f7;
+  --n100: #e8eaee;
+  --n200: #d4d7de;
+  --n300: #b7bcc6;
+  --n400: #8b91a0;
+  --n500: #666c7a;
+  --n600: #4b505c;
+  --n700: #363a44;
+  --n800: #22252c;
+  --n900: #15171c;
+  --n950: #0d0e11;
+
+  /* ---- accent primitives (light-mode weight) ---- */
+  --amber-500: #c8631f;
+  --amber-050: #fbeee0;
+  --teal-500: #146b66;
+  --teal-050: #e2f0ef;
+  --indigo-500: #3a4f80;
+  --indigo-050: #e6e9f3;
+
+  /* ---- accent primitives (dark-mode weight, brighter for contrast) ---- */
+  --amber-400: #e8944f;
+  --teal-400: #34a69e;
+  --indigo-400: #7d97d6;
+
+  /* ---- semantic status — fixed regardless of accent choice ---- */
+  --success-500: #2f7a52;
+  --success-050: #e3f2e9;
+  --warning-500: #a9760c;
+  --warning-050: #faf0d8;
+  --critical-500: #a83f28;
+  --critical-050: #f8e5e0;
+  --success-400: #59b981;
+  --warning-400: #d9a62e;
+  --critical-400: #e0785e;
+
+  /* ================= theme-mapped semantic tokens: LIGHT (default) ================= */
+  --surface: var(--n50);
+  --surface-raised: var(--n0);
+  --surface-sunken: var(--n100);
+  --border: var(--n200);
+  --border-strong: var(--n300);
+  --text: var(--n900);
+  --text-muted: var(--n500);
+  --text-faint: var(--n400);
+  --success: var(--success-500);
+  --success-bg: var(--success-050);
+  --warning: var(--warning-500);
+  --warning-bg: var(--warning-050);
+  --critical: var(--critical-500);
+  --critical-bg: var(--critical-050);
+  --shadow-card: 0 1px 2px rgba(15, 17, 20, 0.06), 0 1px 1px rgba(15, 17, 20, 0.04);
+
+  /* ================= non-color axes: sensible defaults ================= */
+  --radius-card-base: 12px;
+  --radius-input-base: 8px;
+  --radius-pill-base: 999px;
+  --border-w: 1px;
+
+  --density-scale: 1;
+  --type-scale: 1;
+
+  --font-display-base: 'Archivo', system-ui, sans-serif;
+  --font-body-base: 'Public Sans', system-ui, sans-serif;
+  --font-mono-base: 'IBM Plex Mono', ui-monospace, monospace;
+  --w-display: 800;
+  --w-body: 500;
+}
+
+/* ================= theme: dark (system) ================= */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --surface: var(--n950);
+    --surface-raised: var(--n900);
+    --surface-sunken: var(--n800);
+    --border: var(--n800);
+    --border-strong: var(--n700);
+    --text: var(--n50);
+    --text-muted: var(--n400);
+    --text-faint: var(--n500);
+    --success: var(--success-400);
+    --success-bg: #173226;
+    --warning: var(--warning-400);
+    --warning-bg: #332a12;
+    --critical: var(--critical-400);
+    --critical-bg: #3a2019;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ================= theme: dark (explicit) ================= */
+:root[data-theme='dark'] {
+  --surface: var(--n950);
+  --surface-raised: var(--n900);
+  --surface-sunken: var(--n800);
+  --border: var(--n800);
+  --border-strong: var(--n700);
+  --text: var(--n50);
+  --text-muted: var(--n400);
+  --text-faint: var(--n500);
+  --success: var(--success-400);
+  --success-bg: #173226;
+  --warning: var(--warning-400);
+  --warning-bg: #332a12;
+  --critical: var(--critical-400);
+  --critical-bg: #3a2019;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ================= accent — independent axis ================= */
+:root[data-accent='teal'] {
+  --accent: var(--teal-500);
+  --accent-bg: var(--teal-050);
+  --accent-contrast: #fff;
+}
+:root[data-accent='amber'] {
+  --accent: var(--amber-500);
+  --accent-bg: var(--amber-050);
+  --accent-contrast: #fff;
+}
+:root[data-accent='indigo'] {
+  --accent: var(--indigo-500);
+  --accent-bg: var(--indigo-050);
+  --accent-contrast: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light'])[data-accent='teal'] {
+    --accent: var(--teal-400);
+    --accent-bg: #0f2e2b;
+    --accent-contrast: #04120f;
+  }
+  :root:not([data-theme='light'])[data-accent='amber'] {
+    --accent: var(--amber-400);
+    --accent-bg: #3a2712;
+    --accent-contrast: #1c1204;
+  }
+  :root:not([data-theme='light'])[data-accent='indigo'] {
+    --accent: var(--indigo-400);
+    --accent-bg: #1c2338;
+    --accent-contrast: #0a0d17;
+  }
+}
+:root[data-theme='dark'][data-accent='teal'] {
+  --accent: var(--teal-400);
+  --accent-bg: #0f2e2b;
+  --accent-contrast: #04120f;
+}
+:root[data-theme='dark'][data-accent='amber'] {
+  --accent: var(--amber-400);
+  --accent-bg: #3a2712;
+  --accent-contrast: #1c1204;
+}
+:root[data-theme='dark'][data-accent='indigo'] {
+  --accent: var(--indigo-400);
+  --accent-bg: #1c2338;
+  --accent-contrast: #0a0d17;
+}
+
+/* ================= shape: sharp / soft / capsule ================= */
+:root[data-shape='sharp'] {
+  --radius-card-base: 2px;
+  --radius-input-base: 2px;
+  --radius-pill-base: 2px;
+  --border-w: 1.5px;
+  --shadow-card: none;
+}
+:root[data-shape='soft'] {
+  --radius-card-base: 12px;
+  --radius-input-base: 8px;
+  --radius-pill-base: 999px;
+  --border-w: 1px;
+}
+:root[data-shape='capsule'] {
+  --radius-card-base: 22px;
+  --radius-input-base: 999px;
+  --radius-pill-base: 999px;
+  --border-w: 1px;
+  --shadow-card: 0 3px 10px rgba(15, 17, 20, 0.1);
+}
+
+/* ================= density: comfortable / compact ================= */
+:root[data-density='comfortable'] {
+  --density-scale: 1;
+  --type-scale: 1;
+}
+:root[data-density='compact'] {
+  --density-scale: 0.72;
+  --type-scale: 0.92;
+}
+
+/* ================= typeface pairings ================= */
+:root[data-font='technical'] {
+  --font-display-base: 'Archivo', system-ui, sans-serif;
+  --font-body-base: 'Public Sans', system-ui, sans-serif;
+  --font-mono-base: 'IBM Plex Mono', ui-monospace, monospace;
+  --w-display: 800;
+  --w-body: 500;
+}
+:root[data-font='operator'] {
+  --font-display-base: 'Zilla Slab', Georgia, serif;
+  --font-body-base: 'Karla', system-ui, sans-serif;
+  --font-mono-base: 'Space Mono', ui-monospace, monospace;
+  --w-display: 600;
+  --w-body: 500;
+}
+:root[data-font='precision'] {
+  --font-display-base: 'League Spartan', system-ui, sans-serif;
+  --font-body-base: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono-base: 'JetBrains Mono', ui-monospace, monospace;
+  --w-display: 700;
+  --w-body: 500;
+}

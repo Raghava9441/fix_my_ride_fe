@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fix My Ride</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Zilla+Slab:wght@500;600;700&family=Karla:wght@400;500;600&family=Space+Mono:wght@400;700&family=League+Spartan:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Applied synchronously, before first paint, so a returning visitor's
+      // saved theme/shape/font never flashes to the default first.
+      (function () {
+        try {
+          var raw = localStorage.getItem('fmr.preferences')
+          var p = raw ? JSON.parse(raw) : {}
+          var root = document.documentElement
+          if (p.theme && p.theme !== 'auto') root.setAttribute('data-theme', p.theme)
+          root.setAttribute('data-accent', p.accent || 'teal')
+          root.setAttribute('data-shape', p.shape || 'soft')
+          root.setAttribute('data-density', p.density || 'comfortable')
+          root.setAttribute('data-font', p.font || 'technical')
+          root.setAttribute('data-nav', p.nav || 'sidebar')
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

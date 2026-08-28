@@ -1,0 +1,72 @@
+/* ============================================================
+ * Maps semantic tokens (tokens.css) into Tailwind v4's @theme
+ * namespace, so components use plain utilities — bg-surface,
+ * rounded-card, font-display — that stay theme/shape/font aware.
+ *
+ * Every value here is a var() reference, never a literal — the
+ * actual values live in tokens.css and change per data-* attribute.
+ * ============================================================ */
+@theme {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-bg: var(--accent-bg);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-critical: var(--critical);
+  --color-critical-bg: var(--critical-bg);
+
+  --radius-card: var(--radius-card-base);
+  --radius-input: var(--radius-input-base);
+  --radius-pill: var(--radius-pill-base);
+
+  --font-display: var(--font-display-base);
+  --font-body: var(--font-body-base);
+  --font-mono: var(--font-mono-base);
+
+  /* density drives Tailwind's own spacing multiplier (padding, gap, margin
+     utilities all read from it) — no per-component compact/comfortable logic */
+  --spacing: calc(0.25rem * var(--density-scale));
+
+  --text-xs: calc(0.75rem * var(--type-scale));
+  --text-sm: calc(0.8125rem * var(--type-scale));
+  --text-base: calc(0.9375rem * var(--type-scale));
+  --text-lg: calc(1.0625rem * var(--type-scale));
+  --text-xl: calc(1.25rem * var(--type-scale));
+  --text-2xl: calc(1.625rem * var(--type-scale));
+}
+
+@layer base {
+  body {
+    font-family: var(--font-body);
+    font-weight: var(--w-body);
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: var(--w-display);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-accent-contrast);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
