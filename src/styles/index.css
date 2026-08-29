@@ -10,16 +10,115 @@ html {
   color-scheme: light dark;
 }
 
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* ---- utility classes that encode a design decision, not a style ---- */
+
+/* Tabular figures for anything a user compares down a column: odometer
+   readings, currency, counts, IDs. */
 .tabnum {
   font-variant-numeric: tabular-nums;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .interactive {
-    transition:
-      background-color 0.15s ease,
-      border-color 0.15s ease,
-      color 0.15s ease,
-      box-shadow 0.15s ease;
+/* The standard interactive transition. Reads --duration-fast, which is
+   itself scaled by the motion axis, so `data-motion="reduced"` disables
+   it without this rule knowing the axis exists. */
+.interactive {
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+/* An OS-level reduced-motion preference outranks the in-app axis for
+   users who set it once system-wide and never open our settings. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-factor: 0.01;
   }
+  /* `:not(.animate-spin)` is not an oversight. A loading spinner frozen
+     mid-rotation reads as a hung request rather than as calm — indeterminate
+     progress is information, not decoration, so it keeps moving. */
+  *:not(.animate-spin),
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skip link — visually hidden until focused. Every page ships one via
+   AppShell so keyboard users can jump past the nav. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  z-index: var(--z-tooltip);
+}
+.skip-link:focus {
+  left: calc(var(--spacing) * 4);
+  top: calc(var(--spacing) * 4);
+  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
+  background: var(--surface-raised);
+  border: var(--border-w) solid var(--accent);
+  border-radius: var(--radius-input-base);
+}
+
+@keyframes fmr-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fmr-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--spacing) * -1)) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fmr-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.anim-fade-in {
+  animation: fmr-fade-in var(--duration-fast) var(--ease-entrance);
+}
+
+.anim-pop-in {
+  animation: fmr-pop-in var(--duration-fast) var(--ease-entrance);
+}
+
+/* Skeleton placeholder. Uses the shimmer only when motion is enabled —
+   at --motion-factor 0.01 the animation is imperceptible by design. */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 25%,
+    var(--border) 37%,
+    var(--surface-sunken) 63%
+  );
+  background-size: 200% 100%;
+  animation: fmr-shimmer calc(var(--duration-slow) * 5) linear infinite;
+  border-radius: var(--radius-input-base);
 }

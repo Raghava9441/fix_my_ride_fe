@@ -1,78 +1,127 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import clsx from 'clsx'
-import { usePreferences } from '@/lib/preferences/PreferencesProvider'
-import { useAuthStore } from '@/lib/auth/store'
+import { useEffect, useState } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
+import { CloseIcon } from '@/components/icons'
 import { Button } from '@/components/ui'
-import { DashboardIcon, VehicleIcon, QueueIcon, ReminderIcon, StaffIcon, WrenchMark } from './icons'
+import { useFlag } from '@/lib/flags/FlagsProvider'
+import { usePreferences } from '@/lib/preferences/PreferencesProvider'
+import { useDocumentTitle } from '@/lib/routing'
+import { Breadcrumbs } from './Breadcrumbs'
+import { CommandPalette } from './CommandPalette'
+import { SideNav } from './SideNav'
+import { TopBar } from './TopBar'
 
-const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon, roles: null as string[] | null },
-  { to: '/vehicles', label: 'Vehicles', icon: VehicleIcon, roles: null },
-  { to: '/service-queue', label: 'Service queue', icon: QueueIcon, roles: ['admin', 'staff'] },
-  { to: '/reminders', label: 'Reminders', icon: ReminderIcon, roles: null },
-  { to: '/staff', label: 'Staff', icon: StaffIcon, roles: ['admin'] },
-]
-
+/**
+ * The authenticated frame: top bar, primary navigation, breadcrumbs, and the
+ * routed content.
+ *
+ * Layout follows the `nav` preference (rail vs. top bar) and the
+ * `navCollapsed` state, both driven by CSS variables so switching either
+ * doesn't remount anything below it. On narrow viewports the rail becomes an
+ * overlay drawer regardless of preference — a 244px rail on a phone isn't a
+ * layout choice, it's a bug.
+ *
+ * Content scrolls in its own region rather than the window, so the top bar
+ * and rail stay put on a long table without any sticky-positioning
+ * gymnastics.
+ */
 export function AppShell() {
   const { preferences } = usePreferences()
-  const { user, logout } = useAuthStore()
-  const isTopbar = preferences.nav === 'topbar'
+  const location = useLocation()
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const paletteEnabled = useFlag('commandPalette')
 
-  const visibleItems = NAV_ITEMS.filter((item) => !item.roles || (user && item.roles.includes(user.role)))
+  const isRail = preferences.nav === 'sidebar'
+  const railWidth = preferences.navCollapsed
+    ? 'var(--layout-sidenav-collapsed-w)'
+    : 'var(--layout-sidenav-w)'
+
+  useDocumentTitle()
+
+  // Navigating closes the drawer — leaving it open over new content hides
+  // the thing the user just asked for.
+  useEffect(() => setDrawerOpen(false), [location.pathname])
+
+  useEffect(() => {
+    document.getElementById('main-content')?.scrollTo({ top: 0 })
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!paletteEnabled) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [paletteEnabled])
 
   return (
-    <div className={clsx('min-h-screen bg-surface-sunken', !isTopbar && 'md:flex')}>
-      <nav
-        className={clsx(
-          'border-border bg-surface-raised',
-          isTopbar
-            ? 'flex items-center gap-1 border-b px-5 py-3'
-            : 'flex w-full flex-row items-center gap-1 border-b p-3 md:w-52 md:flex-col md:items-stretch md:gap-1.5 md:border-b-0 md:border-r md:p-4',
-        )}
-      >
-        <div className={clsx('flex items-center gap-2', isTopbar ? 'mr-4' : 'mb-5 hidden md:flex')}>
-          <span className="flex h-7 w-7 flex-none items-center justify-center rounded-[calc(var(--radius-card)/1.6)] bg-accent text-accent-contrast">
-            <WrenchMark className="h-4 w-4" />
-          </span>
-          <span className="font-display text-[15px]" style={{ fontWeight: 'var(--w-display)' }}>
-            Fix My Ride
-          </span>
-        </div>
+    <div className="flex h-screen flex-col overflow-hidden bg-surface">
+      <a href="#main-content" className="skip-link text-sm font-semibold">
+        Skip to content
+      </a>
 
-        <div className={clsx('flex flex-1 gap-1', isTopbar ? 'flex-row' : 'flex-row md:flex-col')}>
-          {visibleItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                clsx(
-                  'interactive flex items-center gap-2 rounded-input px-2.5 py-2 text-sm font-semibold text-text-muted hover:bg-surface-sunken',
-                  isActive && 'bg-accent-bg text-text hover:bg-accent-bg',
-                )
-              }
-            >
-              <item.icon className="h-4 w-4 flex-none" />
-              <span className={isTopbar ? 'hidden lg:inline' : 'hidden md:inline'}>{item.label}</span>
-            </NavLink>
-          ))}
-        </div>
+      <TopBar
+        onOpenDrawer={() => setDrawerOpen(true)}
+        onOpenCommandPalette={() => setPaletteOpen(true)}
+        showInlineNav={!isRail}
+      />
 
-        <div className={clsx('flex items-center gap-1', isTopbar ? '' : 'md:mt-auto md:pt-4')}>
-          <NavLink
-            to="/settings"
-            className="interactive rounded-input px-2.5 py-2 text-xs font-semibold text-text-muted hover:bg-surface-sunken hover:text-text"
+      <div className="flex min-h-0 flex-1">
+        {isRail && (
+          <aside
+            className="hidden flex-none border-r border-border bg-surface-raised md:block"
+            style={{ width: railWidth, transition: 'width var(--duration-moderate) var(--ease-standard)' }}
           >
-            Settings
-          </NavLink>
-          <Button variant="ghost" className="!px-2.5 !py-2 text-xs" onClick={logout}>
-            Log out
-          </Button>
-        </div>
-      </nav>
+            <SideNav />
+          </aside>
+        )}
 
-      <main className="flex-1 p-4 md:p-6">
-        <Outlet />
-      </main>
+        {/* Rendered only while open, so it can't be tabbed into from behind
+            the content and doesn't need an inert/focus-trap dance. */}
+        {drawerOpen && (
+          <>
+            <div
+              className="anim-fade-in fixed inset-0 bg-black/40 md:hidden"
+              style={{ zIndex: 'var(--z-drawer-scrim)' }}
+              onClick={() => setDrawerOpen(false)}
+              role="presentation"
+            />
+            <aside
+              className="anim-fade-in fixed inset-y-0 left-0 flex w-64 flex-col bg-surface-raised md:hidden"
+              style={{ zIndex: 'var(--z-drawer)' }}
+              aria-label="Navigation"
+            >
+              <div className="flex flex-none items-center justify-end p-2">
+                <Button
+                  variant="ghost"
+                  iconOnly
+                  size="sm"
+                  onClick={() => setDrawerOpen(false)}
+                  aria-label="Close navigation"
+                >
+                  <CloseIcon className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="min-h-0 flex-1">
+                <SideNav onNavigate={() => setDrawerOpen(false)} />
+              </div>
+            </aside>
+          </>
+        )}
+
+        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 overflow-y-auto focus:outline-none">
+          <div className="mx-auto flex w-full max-w-[var(--layout-content-max)] flex-col gap-4 p-4 md:p-6">
+            <Breadcrumbs />
+            <Outlet />
+          </div>
+        </main>
+      </div>
+
+      {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
     </div>
   )
 }

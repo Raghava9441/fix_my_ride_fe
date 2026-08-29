@@ -8,23 +8,41 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Zilla+Slab:wght@500;600;700&family=Karla:wght@400;500;600&family=Space+Mono:wght@400;700&family=League+Spartan:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Zilla+Slab:wght@500;600;700&family=Karla:wght@400;500;600&family=Space+Mono:wght@400;700&family=League+Spartan:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Inter:wght@400;450;500;600&family=Source+Serif+4:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
     <script>
-      // Applied synchronously, before first paint, so a returning visitor's
-      // saved theme/shape/font never flashes to the default first.
-      (function () {
+      /*
+       * Applies the saved appearance axes to <html> synchronously, before
+       * first paint, so a returning visitor never sees the default theme
+       * flash first.
+       *
+       * Deliberately duplicates a slice of src/lib/preferences/types.ts:
+       * this has to run before any module loads, so it cannot import. Keep
+       * the axis list and the v1->v2 migration in sync with that file — the
+       * provider re-applies on mount, so a drift here shows up as a flash,
+       * not as a wrong final state.
+       */
+      ;(function () {
         try {
           var raw = localStorage.getItem('fmr.preferences')
           var p = raw ? JSON.parse(raw) : {}
           var root = document.documentElement
+
+          // v1 stored no __v and folded text size into `density`.
+          if (!p.__v && p.density === 'compact' && !p.typeScale) p.typeScale = 'sm'
+
           if (p.theme && p.theme !== 'auto') root.setAttribute('data-theme', p.theme)
           root.setAttribute('data-accent', p.accent || 'teal')
           root.setAttribute('data-shape', p.shape || 'soft')
           root.setAttribute('data-density', p.density || 'comfortable')
+          root.setAttribute('data-type-scale', p.typeScale || 'md')
           root.setAttribute('data-font', p.font || 'technical')
+          root.setAttribute('data-contrast', p.contrast || 'standard')
+          root.setAttribute('data-motion', p.motion || 'full')
+          root.setAttribute('data-color-vision', p.colorVision || 'default')
           root.setAttribute('data-nav', p.nav || 'sidebar')
+          if (p.navCollapsed) root.setAttribute('data-nav-collapsed', '')
         } catch (e) {}
       })()
     </script>

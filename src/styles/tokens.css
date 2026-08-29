@@ -1,16 +1,41 @@
 /* ============================================================
  * Design tokens — single source of truth.
  *
- * Two layers:
- *   1. Primitives  — raw color/value ramps, never used directly by components.
- *   2. Semantic    — what components/Tailwind utilities actually consume,
- *                    swapped live via data-* attributes on <html>.
+ * Three layers, strictly ordered. Nothing in a lower-numbered layer
+ * may reference a higher-numbered one.
  *
- * theme.css maps a subset of these into Tailwind's @theme namespace so
- * components can use plain utilities (bg-surface, rounded-card, font-display)
- * that stay theme/shape/density/font-aware automatically.
+ *   1. Primitives  — raw ramps and scales. Never consumed by a component.
+ *   2. Semantic    — what components/Tailwind utilities actually read.
+ *                    Re-bound live via `data-*` attributes on <html>.
+ *   3. Component   — the handful of values only one component family needs
+ *                    (layout metrics, z-index ladder, motion timings).
+ *
+ * theme.css maps layer 2/3 into Tailwind v4's `@theme` namespace so
+ * components use plain utilities (`bg-surface`, `rounded-card`,
+ * `font-display`) that stay axis-aware automatically. A component should
+ * never hard-code a hex value, a px radius, or a transition duration.
+ *
+ * ---- The customization axes ----
+ * Each is an independent `data-*` attribute on <html>, applied before
+ * first paint by the bootstrap script in index.html and kept in sync by
+ * PreferencesProvider. Independent means: any combination is valid, and
+ * adding a value to one axis can never require touching another.
+ *
+ *   data-theme        auto | light | dark
+ *   data-accent       teal | amber | indigo | violet | rose | slate
+ *   data-shape        sharp | soft | capsule
+ *   data-density      comfortable | cozy | compact
+ *   data-type-scale   sm | md | lg | xl
+ *   data-font         technical | operator | precision | humanist
+ *   data-contrast     standard | high
+ *   data-motion       full | reduced
+ *   data-color-vision default | deuteranopia | tritanopia
+ *   data-nav          sidebar | topbar          (layout, not visual)
  * ============================================================ */
 
+/* ============================================================
+ * LAYER 1 — PRIMITIVES
+ * ============================================================ */
 :root {
   /* ---- neutral ramp: cool-grey bias, chosen not inherited ---- */
   --n0: #ffffff;
@@ -26,185 +51,488 @@
   --n900: #15171c;
   --n950: #0d0e11;
 
-  /* ---- accent primitives (light-mode weight) ---- */
-  --amber-500: #c8631f;
-  --amber-050: #fbeee0;
+  /* ---- accent primitives ----
+     `-500` = light-mode weight, `-400` = dark-mode weight (brighter, so it
+     keeps ≥4.5:1 against a near-black surface), `-050` = light-mode tint,
+     `-950` = dark-mode tint. */
   --teal-500: #146b66;
-  --teal-050: #e2f0ef;
-  --indigo-500: #3a4f80;
-  --indigo-050: #e6e9f3;
-
-  /* ---- accent primitives (dark-mode weight, brighter for contrast) ---- */
-  --amber-400: #e8944f;
   --teal-400: #34a69e;
+  --teal-050: #e2f0ef;
+  --teal-950: #0f2e2b;
+
+  --amber-500: #c8631f;
+  --amber-400: #e8944f;
+  --amber-050: #fbeee0;
+  --amber-950: #3a2712;
+
+  --indigo-500: #3a4f80;
   --indigo-400: #7d97d6;
+  --indigo-050: #e6e9f3;
+  --indigo-950: #1c2338;
 
-  /* ---- semantic status — fixed regardless of accent choice ---- */
-  --success-500: #2f7a52;
-  --success-050: #e3f2e9;
-  --warning-500: #a9760c;
-  --warning-050: #faf0d8;
-  --critical-500: #a83f28;
-  --critical-050: #f8e5e0;
-  --success-400: #59b981;
-  --warning-400: #d9a62e;
-  --critical-400: #e0785e;
+  --violet-500: #6b3fa0;
+  --violet-400: #a98ada;
+  --violet-050: #efe8f7;
+  --violet-950: #251a38;
 
-  /* ================= theme-mapped semantic tokens: LIGHT (default) ================= */
+  --rose-500: #a8325a;
+  --rose-400: #e8809f;
+  --rose-050: #fbe4ec;
+  --rose-950: #3a1a26;
+
+  --slate-500: #414753;
+  --slate-400: #9aa3b4;
+  --slate-050: #e9ebef;
+  --slate-950: #262a33;
+
+  /* ---- status primitives ----
+     Three sets. The default set is the conventional green/amber/red; the
+     other two swap hues that the named color-vision deficiency cannot
+     separate. Status meaning is never carried by hue alone in a component
+     (every Badge pairs its color with a dot + text), but a palette that
+     survives on its own is still the right default. */
+  --status-success-500: #2f7a52;
+  --status-success-400: #59b981;
+  --status-success-050: #e3f2e9;
+  --status-success-950: #173226;
+
+  --status-warning-500: #a9760c;
+  --status-warning-400: #d9a62e;
+  --status-warning-050: #faf0d8;
+  --status-warning-950: #332a12;
+
+  --status-critical-500: #a83f28;
+  --status-critical-400: #e0785e;
+  --status-critical-050: #f8e5e0;
+  --status-critical-950: #3a2019;
+
+  --status-info-500: #1f6aa8;
+  --status-info-400: #58a6dd;
+  --status-info-050: #e2edf6;
+  --status-info-950: #0e2739;
+
+  --status-magenta-500: #9c3382;
+  --status-magenta-400: #d97ec4;
+  --status-magenta-050: #f7e3f2;
+  --status-magenta-950: #33163a;
+
+  /* ---- spacing / radius / type primitives ---- */
+  --radius-none: 2px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 22px;
+  --radius-full: 999px;
+
+  /* ---- motion primitives ---- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-entrance: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ============================================================
+ * LAYER 2 — SEMANTIC (light is the un-attributed default)
+ * ============================================================ */
+:root {
+  /* surfaces climb toward the viewer: sunken < base < raised < overlay */
   --surface: var(--n50);
   --surface-raised: var(--n0);
   --surface-sunken: var(--n100);
+  --surface-overlay: var(--n0);
+  --surface-inverse: var(--n900);
+  --text-inverse: var(--n50);
+
   --border: var(--n200);
   --border-strong: var(--n300);
+
   --text: var(--n900);
   --text-muted: var(--n500);
   --text-faint: var(--n400);
-  --success: var(--success-500);
-  --success-bg: var(--success-050);
-  --warning: var(--warning-500);
-  --warning-bg: var(--warning-050);
-  --critical: var(--critical-500);
-  --critical-bg: var(--critical-050);
-  --shadow-card: 0 1px 2px rgba(15, 17, 20, 0.06), 0 1px 1px rgba(15, 17, 20, 0.04);
 
-  /* ================= non-color axes: sensible defaults ================= */
-  --radius-card-base: 12px;
-  --radius-input-base: 8px;
-  --radius-pill-base: 999px;
+  --shadow-card: 0 1px 2px rgba(15, 17, 20, 0.06), 0 1px 1px rgba(15, 17, 20, 0.04);
+  --shadow-overlay: 0 8px 28px rgba(15, 17, 20, 0.14), 0 2px 6px rgba(15, 17, 20, 0.08);
+
+  /* status — re-bound wholesale by the color-vision axis below */
+  --success: var(--status-success-500);
+  --success-bg: var(--status-success-050);
+  --warning: var(--status-warning-500);
+  --warning-bg: var(--status-warning-050);
+  --critical: var(--status-critical-500);
+  --critical-bg: var(--status-critical-050);
+  --info: var(--status-info-500);
+  --info-bg: var(--status-info-050);
+
+  /* accent — re-bound by the accent axis; teal is the default */
+  --accent: var(--teal-500);
+  --accent-bg: var(--teal-050);
+  --accent-contrast: #ffffff;
+
+  /* shape */
+  --radius-card-base: var(--radius-lg);
+  --radius-input-base: var(--radius-md);
+  --radius-pill-base: var(--radius-full);
   --border-w: 1px;
 
+  /* the two independent sizing axes: spacing and type */
   --density-scale: 1;
   --type-scale: 1;
 
+  /* typography */
   --font-display-base: 'Archivo', system-ui, sans-serif;
   --font-body-base: 'Public Sans', system-ui, sans-serif;
   --font-mono-base: 'IBM Plex Mono', ui-monospace, monospace;
   --w-display: 800;
   --w-body: 500;
+
+  /* focus — width widens on the high-contrast axis */
+  --focus-ring-w: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--accent);
 }
 
-/* ================= theme: dark (system) ================= */
+/* ============================================================
+ * LAYER 3 — COMPONENT / LAYOUT
+ * ============================================================ */
+:root {
+  /* Layout metrics. Density scales the shell chrome alongside content, so
+     "compact" isn't content-only — it's the whole frame. */
+  --layout-topbar-h: calc(52px * (0.85 + 0.15 * var(--density-scale)));
+  --layout-sidenav-w: 244px;
+  --layout-sidenav-collapsed-w: 60px;
+  --layout-content-max: 1440px;
+
+  /* z-index ladder. Every stacking context in the app comes from here —
+     there are no ad-hoc z-50s in components. */
+  --z-base: 0;
+  --z-sticky: 100;
+  --z-sidenav: 200;
+  --z-topbar: 300;
+  --z-drawer-scrim: 400;
+  --z-drawer: 410;
+  --z-dropdown: 500;
+  --z-modal-scrim: 600;
+  --z-modal: 610;
+  --z-toast: 700;
+  --z-tooltip: 800;
+
+  /* Motion. Every transition multiplies its base by --motion-factor, so the
+     reduced-motion axis is one variable rather than N media queries. */
+  --motion-factor: 1;
+  --duration-instant: calc(80ms * var(--motion-factor));
+  --duration-fast: calc(140ms * var(--motion-factor));
+  --duration-moderate: calc(220ms * var(--motion-factor));
+  --duration-slow: calc(320ms * var(--motion-factor));
+}
+
+/* ============================================================
+ * AXIS: theme
+ * Dark twice — once for the system preference (only when the user hasn't
+ * explicitly chosen light) and once for the explicit choice — so the
+ * toggle wins in both directions.
+ * ============================================================ */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --surface: var(--n950);
     --surface-raised: var(--n900);
     --surface-sunken: var(--n800);
+    --surface-overlay: var(--n800);
+    --surface-inverse: var(--n50);
+    --text-inverse: var(--n900);
     --border: var(--n800);
     --border-strong: var(--n700);
     --text: var(--n50);
     --text-muted: var(--n400);
     --text-faint: var(--n500);
-    --success: var(--success-400);
-    --success-bg: #173226;
-    --warning: var(--warning-400);
-    --warning-bg: #332a12;
-    --critical: var(--critical-400);
-    --critical-bg: #3a2019;
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-overlay: 0 10px 32px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+    --success: var(--status-success-400);
+    --success-bg: var(--status-success-950);
+    --warning: var(--status-warning-400);
+    --warning-bg: var(--status-warning-950);
+    --critical: var(--status-critical-400);
+    --critical-bg: var(--status-critical-950);
+    --info: var(--status-info-400);
+    --info-bg: var(--status-info-950);
+    --accent: var(--teal-400);
+    --accent-bg: var(--teal-950);
+    --accent-contrast: #04120f;
   }
 }
 
-/* ================= theme: dark (explicit) ================= */
 :root[data-theme='dark'] {
   --surface: var(--n950);
   --surface-raised: var(--n900);
   --surface-sunken: var(--n800);
+  --surface-overlay: var(--n800);
+  --surface-inverse: var(--n50);
+  --text-inverse: var(--n900);
   --border: var(--n800);
   --border-strong: var(--n700);
   --text: var(--n50);
   --text-muted: var(--n400);
   --text-faint: var(--n500);
-  --success: var(--success-400);
-  --success-bg: #173226;
-  --warning: var(--warning-400);
-  --warning-bg: #332a12;
-  --critical: var(--critical-400);
-  --critical-bg: #3a2019;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-overlay: 0 10px 32px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --success: var(--status-success-400);
+  --success-bg: var(--status-success-950);
+  --warning: var(--status-warning-400);
+  --warning-bg: var(--status-warning-950);
+  --critical: var(--status-critical-400);
+  --critical-bg: var(--status-critical-950);
+  --info: var(--status-info-400);
+  --info-bg: var(--status-info-950);
+  --accent: var(--teal-400);
+  --accent-bg: var(--teal-950);
+  --accent-contrast: #04120f;
 }
 
-/* ================= accent — independent axis ================= */
+/* ============================================================
+ * AXIS: accent
+ * Written once per (accent × theme-resolution) rather than generated,
+ * because each accent needs its own hand-picked dark tint and contrast
+ * color — a computed alpha overlay drifts off-hue in dark mode.
+ * ============================================================ */
 :root[data-accent='teal'] {
   --accent: var(--teal-500);
   --accent-bg: var(--teal-050);
-  --accent-contrast: #fff;
+  --accent-contrast: #ffffff;
 }
 :root[data-accent='amber'] {
   --accent: var(--amber-500);
   --accent-bg: var(--amber-050);
-  --accent-contrast: #fff;
+  --accent-contrast: #ffffff;
 }
 :root[data-accent='indigo'] {
   --accent: var(--indigo-500);
   --accent-bg: var(--indigo-050);
-  --accent-contrast: #fff;
+  --accent-contrast: #ffffff;
 }
+:root[data-accent='violet'] {
+  --accent: var(--violet-500);
+  --accent-bg: var(--violet-050);
+  --accent-contrast: #ffffff;
+}
+:root[data-accent='rose'] {
+  --accent: var(--rose-500);
+  --accent-bg: var(--rose-050);
+  --accent-contrast: #ffffff;
+}
+:root[data-accent='slate'] {
+  --accent: var(--slate-500);
+  --accent-bg: var(--slate-050);
+  --accent-contrast: #ffffff;
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light'])[data-accent='teal'] {
     --accent: var(--teal-400);
-    --accent-bg: #0f2e2b;
+    --accent-bg: var(--teal-950);
     --accent-contrast: #04120f;
   }
   :root:not([data-theme='light'])[data-accent='amber'] {
     --accent: var(--amber-400);
-    --accent-bg: #3a2712;
+    --accent-bg: var(--amber-950);
     --accent-contrast: #1c1204;
   }
   :root:not([data-theme='light'])[data-accent='indigo'] {
     --accent: var(--indigo-400);
-    --accent-bg: #1c2338;
+    --accent-bg: var(--indigo-950);
     --accent-contrast: #0a0d17;
   }
+  :root:not([data-theme='light'])[data-accent='violet'] {
+    --accent: var(--violet-400);
+    --accent-bg: var(--violet-950);
+    --accent-contrast: #140b1f;
+  }
+  :root:not([data-theme='light'])[data-accent='rose'] {
+    --accent: var(--rose-400);
+    --accent-bg: var(--rose-950);
+    --accent-contrast: #1f0a12;
+  }
+  :root:not([data-theme='light'])[data-accent='slate'] {
+    --accent: var(--slate-400);
+    --accent-bg: var(--slate-950);
+    --accent-contrast: #0d0f13;
+  }
 }
+
 :root[data-theme='dark'][data-accent='teal'] {
   --accent: var(--teal-400);
-  --accent-bg: #0f2e2b;
+  --accent-bg: var(--teal-950);
   --accent-contrast: #04120f;
 }
 :root[data-theme='dark'][data-accent='amber'] {
   --accent: var(--amber-400);
-  --accent-bg: #3a2712;
+  --accent-bg: var(--amber-950);
   --accent-contrast: #1c1204;
 }
 :root[data-theme='dark'][data-accent='indigo'] {
   --accent: var(--indigo-400);
-  --accent-bg: #1c2338;
+  --accent-bg: var(--indigo-950);
   --accent-contrast: #0a0d17;
 }
+:root[data-theme='dark'][data-accent='violet'] {
+  --accent: var(--violet-400);
+  --accent-bg: var(--violet-950);
+  --accent-contrast: #140b1f;
+}
+:root[data-theme='dark'][data-accent='rose'] {
+  --accent: var(--rose-400);
+  --accent-bg: var(--rose-950);
+  --accent-contrast: #1f0a12;
+}
+:root[data-theme='dark'][data-accent='slate'] {
+  --accent: var(--slate-400);
+  --accent-bg: var(--slate-950);
+  --accent-contrast: #0d0f13;
+}
 
-/* ================= shape: sharp / soft / capsule ================= */
+/* ============================================================
+ * AXIS: color-vision
+ * Re-points the status tokens at primitives whose hues stay separable
+ * under the named deficiency. Deuteranopia swaps green→blue (green and
+ * red collapse together); tritanopia swaps amber→magenta (blue and
+ * yellow collapse together).
+ * ============================================================ */
+:root[data-color-vision='deuteranopia'] {
+  --success: var(--status-info-500);
+  --success-bg: var(--status-info-050);
+  --critical: var(--status-magenta-500);
+  --critical-bg: var(--status-magenta-050);
+  --info: var(--slate-500);
+  --info-bg: var(--slate-050);
+}
+:root[data-color-vision='tritanopia'] {
+  --warning: var(--status-magenta-500);
+  --warning-bg: var(--status-magenta-050);
+  --info: var(--violet-500);
+  --info-bg: var(--violet-050);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light'])[data-color-vision='deuteranopia'] {
+    --success: var(--status-info-400);
+    --success-bg: var(--status-info-950);
+    --critical: var(--status-magenta-400);
+    --critical-bg: var(--status-magenta-950);
+    --info: var(--slate-400);
+    --info-bg: var(--slate-950);
+  }
+  :root:not([data-theme='light'])[data-color-vision='tritanopia'] {
+    --warning: var(--status-magenta-400);
+    --warning-bg: var(--status-magenta-950);
+    --info: var(--violet-400);
+    --info-bg: var(--violet-950);
+  }
+}
+
+:root[data-theme='dark'][data-color-vision='deuteranopia'] {
+  --success: var(--status-info-400);
+  --success-bg: var(--status-info-950);
+  --critical: var(--status-magenta-400);
+  --critical-bg: var(--status-magenta-950);
+  --info: var(--slate-400);
+  --info-bg: var(--slate-950);
+}
+:root[data-theme='dark'][data-color-vision='tritanopia'] {
+  --warning: var(--status-magenta-400);
+  --warning-bg: var(--status-magenta-950);
+  --info: var(--violet-400);
+  --info-bg: var(--violet-950);
+}
+
+/* ============================================================
+ * AXIS: contrast
+ * Not a separate theme — it tightens the existing one. Borders and
+ * secondary text step toward the foreground, and the focus ring thickens.
+ * ============================================================ */
+:root[data-contrast='high'] {
+  --border: var(--n400);
+  --border-strong: var(--n600);
+  --text-muted: var(--n700);
+  --text-faint: var(--n600);
+  --border-w: 1.5px;
+  --focus-ring-w: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light'])[data-contrast='high'] {
+    --border: var(--n600);
+    --border-strong: var(--n400);
+    --text-muted: var(--n200);
+    --text-faint: var(--n300);
+  }
+}
+
+:root[data-theme='dark'][data-contrast='high'] {
+  --border: var(--n600);
+  --border-strong: var(--n400);
+  --text-muted: var(--n200);
+  --text-faint: var(--n300);
+}
+
+/* ============================================================
+ * AXIS: shape
+ * ============================================================ */
 :root[data-shape='sharp'] {
-  --radius-card-base: 2px;
-  --radius-input-base: 2px;
-  --radius-pill-base: 2px;
+  --radius-card-base: var(--radius-none);
+  --radius-input-base: var(--radius-none);
+  --radius-pill-base: var(--radius-none);
   --border-w: 1.5px;
   --shadow-card: none;
 }
 :root[data-shape='soft'] {
-  --radius-card-base: 12px;
-  --radius-input-base: 8px;
-  --radius-pill-base: 999px;
+  --radius-card-base: var(--radius-lg);
+  --radius-input-base: var(--radius-md);
+  --radius-pill-base: var(--radius-full);
   --border-w: 1px;
 }
 :root[data-shape='capsule'] {
-  --radius-card-base: 22px;
-  --radius-input-base: 999px;
-  --radius-pill-base: 999px;
+  --radius-card-base: var(--radius-xl);
+  --radius-input-base: var(--radius-full);
+  --radius-pill-base: var(--radius-full);
   --border-w: 1px;
   --shadow-card: 0 3px 10px rgba(15, 17, 20, 0.1);
 }
 
-/* ================= density: comfortable / compact ================= */
+/* the sharp axis kills shadows; high contrast wants its borders back */
+:root[data-shape='sharp'][data-contrast='high'] {
+  --border-w: 2px;
+}
+
+/* ============================================================
+ * AXIS: density  (spacing only — type size is its own axis)
+ * ============================================================ */
 :root[data-density='comfortable'] {
   --density-scale: 1;
-  --type-scale: 1;
+}
+:root[data-density='cozy'] {
+  --density-scale: 0.86;
 }
 :root[data-density='compact'] {
   --density-scale: 0.72;
-  --type-scale: 0.92;
 }
 
-/* ================= typeface pairings ================= */
+/* ============================================================
+ * AXIS: type-scale  (independent of density, so a user who wants tight
+ * spacing with large text — or the reverse — can have it)
+ * ============================================================ */
+:root[data-type-scale='sm'] {
+  --type-scale: 0.92;
+}
+:root[data-type-scale='md'] {
+  --type-scale: 1;
+}
+:root[data-type-scale='lg'] {
+  --type-scale: 1.09;
+}
+:root[data-type-scale='xl'] {
+  --type-scale: 1.2;
+}
+
+/* ============================================================
+ * AXIS: font
+ * ============================================================ */
 :root[data-font='technical'] {
   --font-display-base: 'Archivo', system-ui, sans-serif;
   --font-body-base: 'Public Sans', system-ui, sans-serif;
@@ -225,4 +553,24 @@
   --font-mono-base: 'JetBrains Mono', ui-monospace, monospace;
   --w-display: 700;
   --w-body: 500;
+}
+:root[data-font='humanist'] {
+  --font-display-base: 'Source Serif 4', Georgia, serif;
+  --font-body-base: 'Inter', system-ui, sans-serif;
+  --font-mono-base: 'IBM Plex Mono', ui-monospace, monospace;
+  --w-display: 600;
+  --w-body: 450;
+}
+
+/* ============================================================
+ * AXIS: motion
+ * `reduced` collapses every duration to ~0 via the one multiplier every
+ * transition token is built from. index.css additionally honours the OS
+ * `prefers-reduced-motion` setting for users who never open Settings.
+ * ============================================================ */
+:root[data-motion='full'] {
+  --motion-factor: 1;
+}
+:root[data-motion='reduced'] {
+  --motion-factor: 0.01;
 }
