@@ -9,7 +9,10 @@ import { useVehicles } from '@/features/vehicles/api'
 export default function DashboardPage() {
   const { session, capabilities } = useAccess()
   const sections = useNavigation()
-  const { data: vehicles, isLoading, isError } = useVehicles()
+  // Only the total is needed here, so ask for a single row and read the
+  // server's count out of the pagination meta rather than pulling every
+  // vehicle down to call `.length` on it.
+  const { data: vehiclePage, isLoading, isError } = useVehicles({ limit: 1 })
 
   const greeting = session?.name || session?.email.split('@')[0] || 'there'
 
@@ -31,7 +34,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
           label="Vehicles"
-          value={isError ? '—' : (vehicles?.length ?? 0)}
+          value={isError ? '—' : (vehiclePage?.pagination.total ?? 0)}
           sub={isError ? 'could not load' : 'on record'}
           loading={isLoading}
         />

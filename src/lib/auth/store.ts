@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { apiRequest, setUnauthorizedHandler } from '../api/client'
+import { abortAllRequests, api, setSessionExpiredHandler } from '../api'
+import { resetQueryCache } from '../queryClient'
 import { isAccountRole, isRbacRole, type AccountRole } from '../access/roles'
 import type { PermissionKey } from '../access/permissions'
 import { clearTokens, getRefreshToken, setAccessToken, setRefreshToken } from './tokenStore'
@@ -67,7 +68,7 @@ function normalizeSession(raw: MeResponse): SessionUser {
   }
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   status: 'idle',
   mfaPending: false,
@@ -75,11 +76,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   async login(email, password) {
     set({ status: 'loading', mfaPending: false })
     try {
-      const data = await apiRequest<LoginResponse>({
-        method: 'POST',
-        url: '/auth/login',
-        data: { email, password },
-      })
+      const data = await api.post<LoginResponse>(
+        '/auth/login',
+        { email, password },
+        // Anonymous: there is no session yet, and a 401 here means "wrong
+        // password", not "token expired" — it must not trigger a refresh.
+        { anonymous: true, operation: 'auth.login' },
+      )
 
       if (data.mfaRequired) {
         set({ status: 'unauthenticated', mfaPending: true })
@@ -89,13 +92,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       setAccessToken(data.accessToken)
       setRefreshToken(data.refreshToken)
 
-      // Login returns a trimmed account; `/auth/me` returns the full one and
-      // is what capability derivation reads. Seed from the inline account so
-      // the first render is correct, then reconcile — one extra request buys
-      // a session shape that never varies by entry point.
-      const inline = data.user ?? data.account
-      set({ user: inline ? normalizeSession(inline) : null, status: 'authenticated' })
-      await get().refreshSession()
+      /*
+       * `/auth/me` is fetched once, not twice.
+       *
+       * This previously seeded the store from login's trimmed account and
+       * then immediately called `refreshSession()` for the full one — two
+       * requests on every sign-in, the second racing the first render. The
+       * full account is what capability derivation needs, so fetch that
+       * directly and set the session once.
+       */
+      const me = await api.get<MeResponse>('/auth/me', { operation: 'auth.me' })
+      set({ user: normalizeSession(me), status: 'authenticated' })
     } catch (err) {
       clearTokens()
       set({ user: null, status: 'unauthenticated' })
@@ -104,18 +111,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   async logout() {
-    // Best-effort server-side revocation. The local session is dropped
-    // either way — a failed call must not strand someone signed in.
     const refreshToken = getRefreshToken()
     try {
+      // Best-effort server-side revocation. The local session is dropped
+      // either way — a failed call must not strand someone signed in.
       if (refreshToken) {
-        await apiRequest({ method: 'POST', url: '/auth/logout', data: { refreshToken } })
+        await api.post('/auth/logout', { refreshToken }, { operation: 'auth.logout' })
       }
     } catch {
-      // token already expired, or offline — both land here and are fine
+      // Token already expired, or offline. Both land here and are fine.
     } finally {
       clearTokens()
       set({ user: null, status: 'unauthenticated', mfaPending: false })
+
+      // Order matters. Cancel in-flight requests first so none of them can
+      // resolve and repopulate the cache after it's cleared, then drop every
+      // cached response — otherwise the next account to sign in on this
+      // device renders the previous user's data until the refetch lands.
+      abortAllRequests('signed out')
+      resetQueryCache()
     }
   },
 
@@ -126,9 +140,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     set({ status: 'loading' })
     try {
-      // No access token exists yet on a fresh page load — this 401s once,
-      // the client's response interceptor refreshes it, then retries.
-      const me = await apiRequest<MeResponse>({ method: 'GET', url: '/auth/me' })
+      // No access token exists in memory yet on a fresh page load, so this
+      // 401s once; the client refreshes and replays it transparently.
+      const me = await api.get<MeResponse>('/auth/me', { operation: 'auth.me' })
       set({ user: normalizeSession(me), status: 'authenticated' })
     } catch {
       clearTokens()
@@ -138,18 +152,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   async refreshSession() {
     try {
-      const me = await apiRequest<MeResponse>({ method: 'GET', url: '/auth/me' })
+      const me = await api.get<MeResponse>('/auth/me', { operation: 'auth.me' })
       set({ user: normalizeSession(me), status: 'authenticated' })
     } catch {
       // Leave the existing session in place — a transient /auth/me failure
-      // shouldn't sign someone out mid-task. A genuine 401 is handled by
-      // the interceptor registered below.
+      // shouldn't sign someone out mid-task. A terminal auth failure comes
+      // through the session-expired handler below instead.
     }
   },
 }))
 
-setUnauthorizedHandler(() => {
+/*
+ * The API layer calls this when a token refresh fails terminally, so the
+ * store learns about it without the client importing application state.
+ *
+ * Note what this does *not* do: navigate. The route guards already redirect
+ * on an unauthenticated session and carry `?next=`, so pushing a location
+ * from here would race them and lose the destination.
+ */
+setSessionExpiredHandler(() => {
   useAuthStore.setState({ user: null, status: 'unauthenticated' })
+  abortAllRequests('session expired')
+  resetQueryCache()
 })
 
 /*

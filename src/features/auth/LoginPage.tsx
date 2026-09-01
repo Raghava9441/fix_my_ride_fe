@@ -5,6 +5,27 @@ import { ApiError } from '@/lib/api/errors'
 import { ROUTE_PATHS } from '@/lib/routing'
 import { Button, Card, CardBody, Field, TextInput } from '@/components/ui'
 
+/**
+ * Turns a sign-in failure into something the user can act on.
+ *
+ * Deliberately not `ApiError.userMessage` for the auth kinds: that wording
+ * ("your session has expired") is right when a token lapses mid-session and
+ * wrong on a login form, where there was no session to expire. Everything
+ * else — network, timeout, rate limit, 5xx — already has the right sentence
+ * there, so it falls through.
+ */
+function messageForLoginFailure(err: unknown): string {
+  if (!(err instanceof ApiError)) return 'Something went wrong. Try again.'
+
+  if (err.kind === 'unauthenticated' || err.kind === 'validation') {
+    // Intentionally does not distinguish "no such account" from "wrong
+    // password" — that difference lets an attacker enumerate valid emails.
+    return 'Email or password is incorrect.'
+  }
+
+  return err.userMessage
+}
+
 export default function LoginPage() {
   const login = useAuthStore((s) => s.login)
   const mfaPending = useAuthStore((s) => s.mfaPending)
@@ -39,7 +60,7 @@ export default function LoginPage() {
       await login(email, password)
       navigate(next, { replace: true })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong. Try again.')
+      setError(messageForLoginFailure(err))
     } finally {
       setSubmitting(false)
     }
