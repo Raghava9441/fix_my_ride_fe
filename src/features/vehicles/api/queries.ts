@@ -1,89 +1,78 @@
 import { useCallback } from 'react'
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQuery,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query'
-import { queryKeys, type Page } from '@/lib/api'
-import type { ApiError } from '@/lib/api'
+import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
+import { queryKeys, type QueryParams } from '@/lib/api'
 import { vehicleService } from './service'
-import type { Vehicle, VehicleListFilters } from '../types'
+import type { VehicleListFilters } from '../types'
 
 /**
  * Read hooks for vehicles.
  *
- * Every one of them forwards TanStack Query's `signal` into the service, which
- * is what makes the search race in the brief impossible:
+ * Every one forwards TanStack Query's `signal` into the service, which is what
+ * makes a search race impossible:
  *
  *     "car" ─▶ "car service" ─▶ "car service near me"
  *
  * Each keystroke changes the query key, Query aborts the superseded request's
  * signal, and the transport cancels the fetch. An older response cannot arrive
- * late and overwrite a newer one, because it never completes — and because
- * Query would discard a result for a key that is no longer active regardless.
- * The previous `useVehicles` ignored `signal` entirely, so every in-flight
- * request ran to completion whether or not anyone still wanted it.
+ * late and overwrite a newer one, because it never completes — and Query would
+ * discard a result for a key that is no longer active regardless.
  */
 
-type VehicleListQueryOptions = Omit<
-  UseQueryOptions<Page<Vehicle>, ApiError, Page<Vehicle>, ReturnType<typeof queryKeys.vehicles.list>>,
-  'queryKey' | 'queryFn'
->
-
-export function useVehicles(filters: VehicleListFilters = {}, options?: VehicleListQueryOptions) {
+export function useVehicles(filters: VehicleListFilters = {}) {
   return useQuery({
     queryKey: queryKeys.vehicles.list(filters),
     queryFn: ({ signal }) => vehicleService.list(filters, signal),
-
-    /**
-     * Keeps the previous page on screen while the next one loads, instead of
-     * flashing an empty table between pages. Query marks the result
-     * `isPlaceholderData`, so the UI can dim it rather than pretend it's
-     * current.
-     */
+    // Keeps the current page on screen while the next loads, instead of
+    // flashing an empty table between pages.
     placeholderData: keepPreviousData,
-    ...options,
   })
 }
 
-export function useVehicle(vehicleId: string | undefined, options?: { enabled?: boolean }) {
+export function useVehicle(vehicleId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.vehicles.detail(vehicleId ?? ''),
     queryFn: ({ signal }) => vehicleService.get(vehicleId!, signal),
     // Without this a detail route renders once with an undefined param and
     // fires `GET /vehicles/undefined` before the router resolves it.
-    enabled: Boolean(vehicleId) && (options?.enabled ?? true),
+    enabled: Boolean(vehicleId),
     staleTime: 60_000,
   })
 }
 
 /**
- * Search-as-you-type.
- *
- * `enabled` on a minimum length rather than debouncing here: debouncing is a
- * UI concern (how long to wait after a keystroke) and belongs in the input,
- * while the query's job is to make sure whatever term is current is the one
- * that wins. Callers pass an already-debounced term.
+ * Search-as-you-type. Callers pass an already-debounced term: the delay is a
+ * UI decision, while making sure the newest term wins is this layer's job.
  */
 export function useVehicleSearch(term: string, { minLength = 2 }: { minLength?: number } = {}) {
   const trimmed = term.trim()
 
   return useQuery({
-    queryKey: queryKeys.vehicles.list({ q: trimmed }),
+    queryKey: queryKeys.vehicles.search(trimmed),
     queryFn: ({ signal }) => vehicleService.search(trimmed, signal),
     enabled: trimmed.length >= minLength,
-    // Search results go stale fast and are cheap to refetch; keeping them
-    // fresh for 15s covers the common "type, backspace, retype" loop without
-    // serving results for a term the user has moved past.
     staleTime: 15_000,
     placeholderData: keepPreviousData,
   })
 }
 
+export function useVehicleByRegistration(registrationNumber: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.byRegistration(registrationNumber ?? ''),
+    queryFn: ({ signal }) => vehicleService.getByRegistration(registrationNumber!, signal),
+    enabled: Boolean(registrationNumber),
+  })
+}
+
+export function useVehicleByVin(vin: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.byVin(vin ?? ''),
+    queryFn: ({ signal }) => vehicleService.getByVin(vin!, signal),
+    enabled: Boolean(vin),
+  })
+}
+
 /**
- * Infinite scrolling over the same paginated endpoint.
+ * Infinite scrolling over the paginated list.
  *
  * Reads `hasNext` from the server's pagination metadata rather than guessing
  * from page size — a final page that happens to be exactly `limit` rows long
@@ -95,27 +84,116 @@ export function useInfiniteVehicles(filters: Omit<VehicleListFilters, 'page'> = 
     queryFn: ({ pageParam, signal }) =>
       vehicleService.list({ ...filters, page: pageParam, limit: pageSize }, signal),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) =>
-      lastPage.pagination.hasNext ? lastPage.pagination.page + 1 : undefined,
-    getPreviousPageParam: (firstPage) =>
-      firstPage.pagination.hasPrevious ? firstPage.pagination.page - 1 : undefined,
-
-    /**
-     * Caps retained pages. Without it, scrolling a long list keeps every page
-     * ever loaded in memory *and* refetches all of them on every
-     * revalidation — the classic infinite-scroll memory and bandwidth leak.
-     */
+    getNextPageParam: (last) => (last.pagination.hasNext ? last.pagination.page + 1 : undefined),
+    getPreviousPageParam: (first) =>
+      first.pagination.hasPrevious ? first.pagination.page - 1 : undefined,
+    // Caps retained pages. Without it, a long scroll keeps every page ever
+    // loaded in memory *and* refetches all of them on every revalidation.
     maxPages: 5,
   })
 }
 
+/* ---------------- sub-resources ---------------- */
+
+export function useVehicleServiceRecords(vehicleId: string | undefined, filters: QueryParams = {}) {
+  return useQuery({
+    queryKey: [...queryKeys.vehicles.serviceRecords(vehicleId ?? ''), filters] as const,
+    queryFn: ({ signal }) => vehicleService.serviceRecords(vehicleId!, filters, signal),
+    enabled: Boolean(vehicleId),
+  })
+}
+
+export function useVehicleServiceCenters(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.serviceCenters(vehicleId ?? ''),
+    queryFn: ({ signal }) => vehicleService.serviceCenters(vehicleId!, signal),
+    enabled: Boolean(vehicleId),
+  })
+}
+
+export function useVehicleOdometer(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.odometer(vehicleId ?? ''),
+    queryFn: ({ signal }) => vehicleService.odometer(vehicleId!, signal),
+    enabled: Boolean(vehicleId),
+  })
+}
+
+export function useVehicleOdometerHistory(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.odometerHistory(vehicleId ?? ''),
+    queryFn: ({ signal }) => vehicleService.odometerHistory(vehicleId!, signal),
+    enabled: Boolean(vehicleId),
+  })
+}
+
+export function useVehicleOdometerReadings(vehicleId: string | undefined, filters: QueryParams = {}) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.odometerReadings(vehicleId ?? '', filters),
+    queryFn: ({ signal }) => vehicleService.odometerReadings(vehicleId!, filters, signal),
+    enabled: Boolean(vehicleId),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useVehicleOdometerReading(vehicleId: string | undefined, readingId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.odometerReading(vehicleId ?? '', readingId ?? ''),
+    queryFn: ({ signal }) => vehicleService.odometerReading(vehicleId!, readingId!, signal),
+    enabled: Boolean(vehicleId && readingId),
+  })
+}
+
+export function useVehicleDocuments(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.documents(vehicleId ?? ''),
+    queryFn: ({ signal }) => vehicleService.documents(vehicleId!, signal),
+    enabled: Boolean(vehicleId),
+  })
+}
+
+export function useVehicleReminders(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.reminders(vehicleId ?? ''),
+    queryFn: ({ signal }) => vehicleService.reminders(vehicleId!, signal),
+    enabled: Boolean(vehicleId),
+  })
+}
+
+export function useVehicleWarranty(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.warranty(vehicleId ?? ''),
+    queryFn: ({ signal }) => vehicleService.warranty(vehicleId!, signal),
+    enabled: Boolean(vehicleId),
+  })
+}
+
+export function useVehicleInsurance(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.insurance(vehicleId ?? ''),
+    queryFn: ({ signal }) => vehicleService.insurance(vehicleId!, signal),
+    enabled: Boolean(vehicleId),
+  })
+}
+
+export function useVehicleStats(vehicleId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vehicles.stats(vehicleId ?? ''),
+    queryFn: ({ signal }) => vehicleService.stats(vehicleId!, signal),
+    enabled: Boolean(vehicleId),
+    staleTime: 5 * 60_000,
+  })
+}
+
+/* ---------------- prefetch ---------------- */
+
 /**
- * Warms a vehicle's detail cache.
+ * Warms a vehicle's detail cache — call on row hover/focus in a list. By the
+ * time the click registers the request is usually already in flight or done,
+ * so the detail screen renders with data instead of a skeleton.
  *
- * Called on row hover/focus in the list. By the time the click registers the
- * request is usually already in flight or done, so the detail screen renders
- * with data instead of a skeleton. `prefetchQuery` is a no-op when the entry
- * is already fresh, so hovering a row repeatedly costs nothing.
+ * `prefetchQuery` is a no-op when the entry is already fresh, so hovering a
+ * row repeatedly costs nothing.
  */
 export function usePrefetchVehicle() {
   const queryClient = useQueryClient()

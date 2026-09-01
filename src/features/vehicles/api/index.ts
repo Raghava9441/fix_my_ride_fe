@@ -1,9 +1,41 @@
 export { vehicleService } from './service'
+
 export {
   useVehicles,
   useVehicle,
   useVehicleSearch,
+  useVehicleByRegistration,
+  useVehicleByVin,
   useInfiniteVehicles,
+  useVehicleServiceRecords,
+  useVehicleServiceCenters,
+  useVehicleOdometer,
+  useVehicleOdometerHistory,
+  useVehicleOdometerReadings,
+  useVehicleOdometerReading,
+  useVehicleDocuments,
+  useVehicleReminders,
+  useVehicleWarranty,
+  useVehicleInsurance,
+  useVehicleStats,
   usePrefetchVehicle,
 } from './queries'
-export { useCreateVehicle, useUpdateVehicle, useDeleteVehicle } from './mutations'
+
+export {
+  useCreateVehicle,
+  useUpdateVehicle,
+  useDeleteVehicle,
+  useAuthorizeServiceCenter,
+  useUpdateServiceCenterAccess,
+  useRevokeServiceCenter,
+  useRecordOdometer,
+  useCreateOdometerReading,
+  useUpdateOdometerReading,
+  useVerifyOdometerReading,
+  useDeleteOdometerReading,
+  useAddVehicleDocument,
+  useRemoveVehicleDocument,
+  useUpdateWarranty,
+  useUpdateInsurance,
+  useTransferOwnership,
+} from './mutations'

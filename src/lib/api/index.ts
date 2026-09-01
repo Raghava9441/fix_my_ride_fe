@@ -8,8 +8,12 @@
  */
 
 export { api, request, requestData, abortAllRequests } from './client'
+export { fetchPage } from './list'
 export { API_BASE_URL, API_CONFIG } from './config'
 export { queryKeys } from './queryKeys'
+
+export { isPopulated, refId } from './domain'
+export type { Address, BaseDocument, GeoPoint, Id, IsoDate, ListParams, Ref } from './domain'
 export { newRequestId } from './requestId'
 export { setSessionExpiredHandler } from './authRefresh'
 export { apiInspector } from './devtools'

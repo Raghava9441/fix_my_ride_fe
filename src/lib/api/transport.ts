@@ -122,14 +122,22 @@ export async function performRequest<T>(request: TransportRequest): Promise<ApiR
   }
 
   const hasBody = request.body !== undefined && request.method !== 'GET' && request.method !== 'HEAD'
-  if (hasBody) headers['Content-Type'] = 'application/json'
+
+  /*
+   * File uploads pass `FormData` straight through. Setting `Content-Type`
+   * ourselves would omit the multipart boundary the browser generates, and
+   * the server would fail to parse the body — so the header is deliberately
+   * left unset for this case.
+   */
+  const isFormData = typeof FormData !== 'undefined' && request.body instanceof FormData
+  if (hasBody && !isFormData) headers['Content-Type'] = 'application/json'
 
   let response: Response
   try {
     response = await fetch(buildUrl(request.url, request.params), {
       method: request.method,
       headers,
-      body: hasBody ? JSON.stringify(request.body) : undefined,
+      body: hasBody ? (isFormData ? (request.body as FormData) : JSON.stringify(request.body)) : undefined,
       signal,
       credentials: 'same-origin',
     })
