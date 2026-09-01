@@ -1,5 +1,6 @@
 export { reportService } from './service'
 export {
+  useDashboardOverview,
   useDashboardReport,
   useServiceCenterReport,
   useOwnerReport,

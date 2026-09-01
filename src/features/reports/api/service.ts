@@ -1,6 +1,7 @@
 import { api, type QueryParams } from '@/lib/api'
 import type {
   AdminReport,
+  DashboardOverview,
   ExportReportInput,
   ExportReportResult,
   OwnerReport,
@@ -31,6 +32,23 @@ const BASE = '/reports'
 const REPORT_TIMEOUT_MS = 60_000
 
 export const reportService = {
+  /**
+   * Everything the dashboard renders, in one request.
+   *
+   * Deliberately one call rather than six: a dashboard that fans out on mount
+   * pays six times the latency and its tiles land at different moments, so the
+   * page visibly reflows as each arrives. Scope (center / owner / platform) is
+   * resolved server-side from the caller.
+   */
+  overview(days = 30, serviceCenterId?: string, signal?: AbortSignal): Promise<DashboardOverview> {
+    return api.get<DashboardOverview>(`${BASE}/overview`, {
+      params: { days, serviceCenterId },
+      signal,
+      timeoutMs: REPORT_TIMEOUT_MS,
+      operation: 'reports.overview',
+    })
+  },
+
   dashboard(filters: ReportFilters = {}, signal?: AbortSignal): Promise<ReportResult> {
     return api.get<ReportResult>(`${BASE}/dashboard`, {
       params: filters as QueryParams,

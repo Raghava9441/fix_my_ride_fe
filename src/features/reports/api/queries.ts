@@ -11,6 +11,25 @@ import type { AdminReport, OwnerReport, ReportFilters, ServiceCenterReport } fro
  */
 const REPORT_STALE_TIME = 5 * 60_000
 
+/**
+ * The dashboard's single query.
+ *
+ * Shorter stale time than the other reports: this is the screen people leave
+ * open on a wall display, and it's cheap enough to keep current. Refetches on
+ * focus via the client-wide default, so returning to the tab shows today's
+ * numbers rather than the ones from when it was opened.
+ */
+export function useDashboardOverview(days = 30, serviceCenterId?: string) {
+  return useQuery({
+    queryKey: [...queryKeys.reports.all, 'overview', { days, serviceCenterId }] as const,
+    queryFn: ({ signal }) => reportService.overview(days, serviceCenterId, signal),
+    staleTime: 60_000,
+    // Keeps the current numbers on screen while a changed range loads, rather
+    // than collapsing six KPI tiles to skeletons on every filter click.
+    placeholderData: keepPreviousData,
+  })
+}
+
 export function useDashboardReport(filters: ReportFilters = {}) {
   return useQuery({
     queryKey: queryKeys.reports.dashboard(filters),
