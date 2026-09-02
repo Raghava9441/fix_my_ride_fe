@@ -22,6 +22,8 @@ export {
   useUpdateServicePart,
   useRemoveServicePart,
   useAddServiceLabor,
+  useUpdateServiceLabor,
+  useRemoveServiceLabor,
   useAddServiceRecordDocument,
   useRemoveServiceRecordDocument,
   useGenerateInvoice,

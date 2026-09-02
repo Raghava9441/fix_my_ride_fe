@@ -89,6 +89,18 @@ export const serviceRecordService = {
     return api.post<ServiceLabor>(`${byId(id)}/labor`, input, { operation: 'serviceRecords.addLabor' })
   },
 
+  updateLabor(id: string, laborId: string, input: Partial<ServiceLabor>) {
+    return api.put<ServiceLabor>(`${byId(id)}/labor/${encodeURIComponent(laborId)}`, input, {
+      operation: 'serviceRecords.updateLabor',
+    })
+  },
+
+  removeLabor(id: string, laborId: string) {
+    return api.delete<void>(`${byId(id)}/labor/${encodeURIComponent(laborId)}`, {
+      operation: 'serviceRecords.removeLabor',
+    })
+  },
+
   /* ---------------- documents ---------------- */
 
   documents(id: string, signal?: AbortSignal) {

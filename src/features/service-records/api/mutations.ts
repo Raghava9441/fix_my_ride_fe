@@ -155,6 +155,32 @@ export function useAddServiceLabor(id: string) {
   })
 }
 
+export function useUpdateServiceLabor(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<ServiceLabor, ApiError, { laborId: string; input: Partial<ServiceLabor> }>({
+    mutationKey: ['service-records', 'update-labor', id],
+    mutationFn: ({ laborId, input }) => serviceRecordService.updateLabor(id, laborId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.serviceRecords.labor(id) })
+      invalidateRecord(queryClient, id)
+    },
+  })
+}
+
+export function useRemoveServiceLabor(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, ApiError, string>({
+    mutationKey: ['service-records', 'remove-labor', id],
+    mutationFn: (laborId) => serviceRecordService.removeLabor(id, laborId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.serviceRecords.labor(id) })
+      invalidateRecord(queryClient, id)
+    },
+  })
+}
+
 /* ---------------- documents ---------------- */
 
 export function useAddServiceRecordDocument(id: string) {

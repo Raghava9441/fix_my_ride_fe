@@ -68,6 +68,12 @@ export interface ServiceRecord extends BaseDocument {
   description: string
   cost: ServiceCost
   partsReplaced?: ServicePart[]
+  /**
+   * Itemised labour behind `cost.laborTotal`, which the server re-derives
+   * from these lines whenever one changes.
+   */
+  laborItems?: ServiceLabor[]
+  feedback?: ServiceFeedback
   nextService?: NextServiceRecommendation
   status: ServiceStatus
   createdBy?: { accountId: Id; role: 'owner' | 'staff' }
@@ -87,7 +93,14 @@ export interface ServiceRecordListFilters extends ListParams {
 
 export interface CreateServiceRecordInput {
   vehicleId: Id
-  serviceCenterId: Id
+  /*
+   * All optional: the server resolves the centre from the caller's staff
+   * profile (falling back to the vehicle's primary authorised centre), and the
+   * owner from the vehicle. `createdBy` isn't here at all — it comes from the
+   * session, and accepting it from a client would let a caller attribute work
+   * to somebody else.
+   */
+  serviceCenterId?: Id
   ownerId?: Id
   technicianId?: Id
   serviceDate: IsoDate
