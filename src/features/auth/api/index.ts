@@ -1,6 +1,6 @@
 export { authService, oauthUrls } from './service'
 export type { RegisterInput, MfaSetupResult } from './service'
-export { useVerifyEmail } from './queries'
+export { useVerifyEmail, useMyAccount } from './queries'
 export {
   useRegister,
   useVerifyMfa,

@@ -32,14 +32,20 @@ export interface RegisterInput {
 }
 
 export interface MfaSetupResult {
-  /** `otpauth://` URI for the authenticator app. */
-  otpauthUrl?: string
-  /** Rendered QR code, usually a data URI. */
-  qrCode?: string
-  /*
-   * The shared secret is intentionally not typed here. It is a credential;
-   * the UI shows the QR code and never needs to read, log, or store it.
+  /**
+   * `otpauth://` URI for the authenticator app. On a phone this is tappable
+   * and opens the app directly.
    */
+  otpauthUrl: string
+  /**
+   * Base32 shared secret, for manual entry when scanning isn't possible.
+   *
+   * A live credential: shown once, never persisted client-side, and never
+   * logged — `redact()` strips `secret`-keyed fields at the logging sink.
+   */
+  secret: string
+  /** Single-use recovery codes. Shown once and not retrievable again. */
+  backupCodes: string[]
 }
 
 export const authService = {
@@ -92,7 +98,15 @@ export const authService = {
 
   /* ---------------- authenticated ---------------- */
 
-  updateProfile(input: { firstName?: string; lastName?: string; phone?: string; preferences?: AccountPreferences }) {
+  /**
+   * `phone: null` clears it. `undefined` would be dropped by JSON
+   * serialisation and read server-side as "leave unchanged", so an optional
+   * field could be set once and never removed.
+   */
+  updateProfile(input: {
+    phone?: string | null
+    preferences?: AccountPreferences
+  }) {
     return api.put<Account>(`${BASE}/me`, input, { operation: 'auth.updateProfile' })
   },
 
