@@ -11,8 +11,22 @@ export interface OdometerValue {
   recordedBy?: Id
 }
 
+/** The subset of a service center the vehicle endpoints populate. */
+export interface ServiceCenterSummary {
+  _id: Id
+  name?: string
+  email?: string
+  phone?: string
+  address?: Address
+}
+
 export interface AuthorizedServiceCenter {
-  serviceCenterId: Id
+  /**
+   * Populated by `GET /vehicles/:id/service-centers`, a bare id elsewhere.
+   * Typed as the union rather than the convenient half: declaring it a string
+   * crashed the overview tab, which rendered the object straight into JSX.
+   */
+  serviceCenterId: Ref<ServiceCenterSummary>
   authorizedBy?: Id
   authorizedAt: IsoDate
   accessLevel: AccessLevel
@@ -84,12 +98,18 @@ export interface VehicleInsurance {
   notes?: string
 }
 
+/**
+ * Shape returned by `GET /vehicles/:id/stats`.
+ *
+ * Field names taken from the endpoint itself. An earlier guess
+ * (`totalServices` / `totalSpent`) type-checked and rendered a card of
+ * em dashes, because none of those keys exist on the response.
+ */
 export interface VehicleStats {
-  totalServices?: number
-  totalSpent?: number
-  averageServiceCost?: number
-  lastServiceDate?: IsoDate
-  [key: string]: unknown
+  serviceCount?: number
+  totalServiceCost?: number
+  /** Null until there are at least two services to measure between. */
+  averageServiceIntervalDays?: number | null
 }
 
 /**
