@@ -1,5 +1,4 @@
 import { api, API_BASE_URL } from '@/lib/api'
-import type { MeResponse } from '@/lib/auth/types'
 import type { Account, AccountPreferences } from '@/features/accounts/types'
 
 /**
@@ -21,14 +20,43 @@ import type { Account, AccountPreferences } from '@/features/accounts/types'
 
 const BASE = '/auth'
 
+/**
+ * `firstName` and `lastName` are required, not optional — `authService
+ * .register()` destructures them unconditionally and the account document
+ * requires both.
+ *
+ * `tenantSlug`/`tenantId` join an existing workspace. Creating one goes
+ * through `POST /onboarding/signup` instead, which takes the organisation
+ * details as well; the two are not interchangeable.
+ */
 export interface RegisterInput {
   email: string
   password: string
-  firstName?: string
-  lastName?: string
-  phone?: string
-  /** Present when registering through an invitation link. */
-  invitationToken?: string
+  firstName: string
+  lastName: string
+  tenantSlug?: string
+  tenantId?: string
+}
+
+/**
+ * What `POST /auth/register` actually answers with.
+ *
+ * Registration issues tokens: it signs the new account in immediately rather
+ * than parking them on a "check your email" screen. Verification is a
+ * separate, later step — the account exists and is usable before it happens.
+ */
+export interface RegisterResult {
+  id: string
+  email: string
+  accessToken: string
+  refreshToken: string
+}
+
+/** `POST /auth/mfa/verify` and the tokens it completes a sign-in with. */
+export interface MfaVerifyResult {
+  user?: { id: string; email: string }
+  accessToken: string
+  refreshToken: string
 }
 
 export interface MfaSetupResult {
@@ -50,30 +78,43 @@ export interface MfaSetupResult {
 
 export const authService = {
   register(input: RegisterInput) {
-    return api.post<{ accountId?: string; requiresVerification?: boolean }>(`${BASE}/register`, input, {
+    return api.post<RegisterResult>(`${BASE}/register`, input, {
       anonymous: true,
       operation: 'auth.register',
     })
   },
 
-  /** Completes a sign-in that returned `mfaRequired`. */
-  verifyMfa(input: { email: string; code: string }) {
-    return api.post<{ accessToken: string; refreshToken: string; user?: MeResponse }>(
-      `${BASE}/mfa/verify`,
-      input,
-      { anonymous: true, operation: 'auth.mfaVerify' },
-    )
+  /**
+   * Completes a sign-in that was answered with an MFA challenge.
+   *
+   * Takes the `mfaToken` from that challenge, **not** the email: the token is
+   * a short-lived (5 minute) signed assertion that the password step already
+   * passed, so this endpoint never sees a password and cannot be used to
+   * brute-force one. Re-sending the email would have meant a second
+   * credential check here.
+   */
+  verifyMfa(input: { mfaToken: string; code: string }) {
+    return api.post<MfaVerifyResult>(`${BASE}/mfa/verify`, input, {
+      anonymous: true,
+      operation: 'auth.mfaVerify',
+    })
   },
 
+  /**
+   * Always resolves for a well-formed email, whether or not an account
+   * exists — the endpoint is deliberately uniform to stop it being used to
+   * enumerate registered addresses. The UI must not infer anything from
+   * success, and must show the same message either way.
+   */
   forgotPassword(email: string) {
-    return api.post<{ sent: boolean }>(`${BASE}/forgot-password`, { email }, {
+    return api.post<null>(`${BASE}/forgot-password`, { email }, {
       anonymous: true,
       operation: 'auth.forgotPassword',
     })
   },
 
   resetPassword(input: { token: string; password: string }) {
-    return api.post<{ reset: boolean }>(`${BASE}/reset-password`, input, {
+    return api.post<null>(`${BASE}/reset-password`, input, {
       anonymous: true,
       operation: 'auth.resetPassword',
     })
@@ -89,8 +130,9 @@ export const authService = {
     })
   },
 
+  /** Uniform response for the same anti-enumeration reason as forgotPassword. */
   resendVerification(email: string) {
-    return api.post<{ sent: boolean }>(`${BASE}/resend-verification`, { email }, {
+    return api.post<null>(`${BASE}/resend-verification`, { email }, {
       anonymous: true,
       operation: 'auth.resendVerification',
     })
@@ -111,7 +153,7 @@ export const authService = {
   },
 
   changePassword(input: { currentPassword: string; newPassword: string }) {
-    return api.post<{ changed: boolean }>(`${BASE}/change-password`, input, {
+    return api.post<null>(`${BASE}/change-password`, input, {
       operation: 'auth.changePassword',
     })
   },
@@ -121,20 +163,25 @@ export const authService = {
   },
 
   enableMfa(code: string) {
-    return api.post<{ enabled: boolean }>(`${BASE}/mfa/enable`, { code }, {
+    return api.post<null>(`${BASE}/mfa/enable`, { code }, {
       operation: 'auth.mfaEnable',
     })
   },
 
-  disableMfa(input: { password?: string; code?: string }) {
-    return api.post<{ disabled: boolean }>(`${BASE}/mfa/disable`, input, {
+  /**
+   * Takes a current TOTP code. The route reads `req.body.code` only — it does
+   * **not** re-check a password, despite what a `password` field here would
+   * imply, so don't collect one and give the false impression it's verified.
+   */
+  disableMfa(input: { code: string }) {
+    return api.post<null>(`${BASE}/mfa/disable`, input, {
       operation: 'auth.mfaDisable',
     })
   },
 
   /** Regenerates single-use recovery codes. Shown once, never re-fetchable. */
   regenerateBackupCodes() {
-    return api.post<{ codes: string[] }>(`${BASE}/mfa/backup-codes`, undefined, {
+    return api.post<{ backupCodes: string[] }>(`${BASE}/mfa/backup-codes`, undefined, {
       operation: 'auth.mfaBackupCodes',
     })
   },

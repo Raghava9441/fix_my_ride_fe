@@ -68,13 +68,20 @@ export interface CreateInvitationInput {
 
 export type UpdateInvitationInput = Partial<CreateInvitationInput>
 
-/** What `GET /invitations/validate?token=` returns before the user signs in. */
+/**
+ * What `GET /invitations/validate?token=` returns before the user signs in.
+ *
+ * The controller answers `{ valid, invitation }` with the **whole** document
+ * nested — not a flattened preview. This type previously declared the flat
+ * shape, so every field would have read as undefined at runtime and the
+ * screen would have rendered an invitation with no inviter, no role, and no
+ * id to accept with.
+ *
+ * `valid` is a separate flag from the document's own `status` and is the one
+ * to trust: it comes from `invitation.isValid()`, which also accounts for
+ * expiry and use count, neither of which is decidable from `status` alone.
+ */
 export interface InvitationPreview {
   valid: boolean
-  inviterName?: string
-  inviteeEmail?: string
-  invitationType?: InvitationType
-  role?: InvitationRole
-  expiresAt?: IsoDate
-  serviceCenterName?: string
+  invitation: Invitation
 }

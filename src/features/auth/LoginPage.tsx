@@ -1,40 +1,21 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth/store'
-import { ApiError } from '@/lib/api/errors'
 import { ROUTE_PATHS } from '@/lib/routing'
-import { Button, Card, CardBody, Field, TextInput } from '@/components/ui'
-
-/**
- * Turns a sign-in failure into something the user can act on.
- *
- * Deliberately not `ApiError.userMessage` for the auth kinds: that wording
- * ("your session has expired") is right when a token lapses mid-session and
- * wrong on a login form, where there was no session to expire. Everything
- * else — network, timeout, rate limit, 5xx — already has the right sentence
- * there, so it falls through.
- */
-function messageForLoginFailure(err: unknown): string {
-  if (!(err instanceof ApiError)) return 'Something went wrong. Try again.'
-
-  if (err.kind === 'unauthenticated' || err.kind === 'validation') {
-    // Intentionally does not distinguish "no such account" from "wrong
-    // password" — that difference lets an attacker enumerate valid emails.
-    return 'Email or password is incorrect.'
-  }
-
-  return err.userMessage
-}
+import { Alert, Button, Field, PasswordInput, TextInput } from '@/components/ui'
+import { AuthCard } from './components/AuthCard'
+import { MfaChallengeForm } from './components/MfaChallengeForm'
+import { errorReference, signInErrorMessage } from './authErrors'
 
 export default function LoginPage() {
   const login = useAuthStore((s) => s.login)
-  const mfaPending = useAuthStore((s) => s.mfaPending)
+  const mfaChallenge = useAuthStore((s) => s.mfaChallenge)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
   const [submitting, setSubmitting] = useState(false)
 
   /*
@@ -54,77 +35,87 @@ export default function LoginPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
+    if (submitting) return // guards a double-submit from a fast second Enter
     setError(null)
     setSubmitting(true)
     try {
-      await login(email, password)
-      navigate(next, { replace: true })
+      const outcome = await login(email, password)
+      /*
+       * Only navigate once a session actually exists. An MFA challenge is a
+       * *successful* password step that hasn't finished signing anyone in —
+       * navigating on it sent the user to a guarded route with no session,
+       * which bounced them straight back to this page.
+       */
+      if (outcome.kind === 'authenticated') navigate(next, { replace: true })
     } catch (err) {
-      setError(messageForLoginFailure(err))
+      setError(err)
     } finally {
       setSubmitting(false)
     }
   }
 
+  // The challenge replaces the form rather than appearing beneath it: the
+  // password step is done, and leaving its fields on screen invites someone
+  // to retype a password that was already accepted.
+  if (mfaChallenge) {
+    return <MfaChallengeForm onVerified={() => navigate(next, { replace: true })} />
+  }
+
   return (
-    <Card className="w-full max-w-sm">
-      <CardBody className="p-7">
-        <h1 className="text-xl">Sign in</h1>
-        <p className="mt-1 text-sm text-text-muted">Manage your vehicles, jobs, and service centers.</p>
-
-        <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
-          <Field label="Email" required>
-            {(props) => (
-              <TextInput
-                {...props}
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            )}
-          </Field>
-
-          <Field label="Password" required>
-            {(props) => (
-              <TextInput
-                {...props}
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            )}
-          </Field>
-
-          {mfaPending && (
-            <p className="text-sm font-medium text-warning">
-              This account uses two-factor authentication. The verification step isn’t built in this client yet.
-            </p>
-          )}
-
-          {error && (
-            <p role="alert" className="text-sm font-medium text-critical">
-              {error}
-            </p>
-          )}
-
-          <Button type="submit" className="w-full" loading={submitting}>
-            Sign in
-          </Button>
-        </form>
-
-        <div className="mt-5 flex items-center justify-between text-xs">
-          <Link to={ROUTE_PATHS.forgotPassword} className="interactive font-semibold text-text-muted hover:text-text">
+    <AuthCard
+      title="Sign in"
+      description="Manage your vehicles, jobs, and service centers."
+      footer={
+        <>
+          <Link
+            to={ROUTE_PATHS.forgotPassword}
+            className="interactive font-semibold text-text-muted hover:text-text"
+          >
             Forgot password?
           </Link>
           <Link to={ROUTE_PATHS.register} className="interactive font-semibold text-accent">
             Create an account
           </Link>
-        </div>
-      </CardBody>
-    </Card>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+        <Field label="Email" required>
+          {(props) => (
+            <TextInput
+              {...props}
+              type="email"
+              autoComplete="email"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          )}
+        </Field>
+
+        <Field label="Password" required>
+          {(props) => (
+            <PasswordInput
+              {...props}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
+        </Field>
+
+        {error != null && (
+          <Alert reference={errorReference(error)}>{signInErrorMessage(error)}</Alert>
+        )}
+
+        <Button type="submit" className="w-full" loading={submitting}>
+          Sign in
+        </Button>
+      </form>
+    </AuthCard>
   )
 }

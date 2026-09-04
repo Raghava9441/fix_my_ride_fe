@@ -11,6 +11,7 @@ export {
   STATUS_ORDER,
   humanizeServiceType,
   formatCurrency,
+  DEFAULT_CURRENCY,
   formatCompactCurrency,
   formatShortDate,
 } from './chartTokens'

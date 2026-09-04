@@ -70,12 +70,53 @@ export interface MeResponse {
   status?: string
 }
 
+/**
+ * A successful `POST /auth/login`.
+ *
+ * There is no `mfaRequired` field here, and there never was. An account with
+ * MFA enabled does not get a success envelope with a flag on it — the
+ * endpoint answers **401 with a failure envelope** carrying code `AUTH_010`
+ * and the challenge token in `details.mfaToken`. The flag this type used to
+ * declare could not occur, so the branch reading it never ran and every MFA
+ * user was told their password was wrong. See `MfaChallenge`.
+ */
 export interface LoginResponse {
   user?: MeResponse
   account?: MeResponse
   accessToken: string
   refreshToken: string
   expiresIn?: number
-  /** Present when the account has MFA enabled and must complete the challenge. */
-  mfaRequired?: boolean
 }
+
+/** The token pair every sign-in path ends with, whatever route it took. */
+export interface SessionTokens {
+  accessToken: string
+  refreshToken: string
+}
+
+/**
+ * A sign-in that passed the password step and is waiting on a TOTP code.
+ *
+ * `token` is a short-lived signed assertion, not a session: it proves the
+ * password check happened so the verify call doesn't have to repeat it. It
+ * is held in memory only and never persisted — writing it to storage would
+ * leave a credential that completes a sign-in sitting on disk.
+ */
+export interface MfaChallenge {
+  token: string
+  /** Echoed back to the user so a stalled challenge names the account. */
+  email: string
+  /** Epoch ms. The server signs these for 5 minutes. */
+  expiresAt: number
+}
+
+/**
+ * What a sign-in attempt resolved to.
+ *
+ * A discriminated result rather than a boolean or a thrown error, for the
+ * same reason `AccessDecision` is: "signed in" and "needs a second factor"
+ * are both successful outcomes that demand different next steps, and
+ * collapsing them is what produced the bug above. Genuine failures — wrong
+ * password, locked account, network — still throw.
+ */
+export type LoginOutcome = { kind: 'authenticated' } | { kind: 'mfa-required'; email: string }

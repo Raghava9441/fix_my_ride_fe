@@ -16,7 +16,7 @@ import {
   useToast,
 } from '@/components/ui'
 import { AlertIcon, ChevronDownIcon, InvoiceIcon } from '@/components/icons'
-import { STATUS_STYLES, formatCurrency, humanizeServiceType } from '@/components/charts'
+import { DEFAULT_CURRENCY, STATUS_STYLES, formatCurrency, humanizeServiceType } from '@/components/charts'
 import { Can, PERMISSIONS, access } from '@/lib/access'
 import { isPopulated, refId } from '@/lib/api'
 import { asApiError } from '@/lib/queryClient'
@@ -96,7 +96,7 @@ export default function ServiceRecordDetailPage() {
   const vehicle = isPopulated(record.vehicleId) ? record.vehicleId : null
   const vehicleId = refId(record.vehicleId)
   const center = isPopulated(record.serviceCenterId) ? record.serviceCenterId : null
-  const currency = record.cost?.currency ?? 'USD'
+  const currency = record.cost?.currency ?? DEFAULT_CURRENCY
   const transitions = NEXT_STATUSES[record.status] ?? []
 
   const invoiced = Boolean(record.cost?.invoiceNumber)

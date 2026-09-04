@@ -44,6 +44,8 @@ export interface ApiErrorContext {
   traceId?: string
   correlationId?: string
   fieldErrors?: Array<{ field?: string; message: string }>
+  /** Structured payload from the failure envelope. See `ApiError.details`. */
+  details?: Record<string, unknown>
   retryable: boolean
   retryAfterMs?: number
   /** How many attempts had already been made when this error surfaced. */
@@ -70,6 +72,14 @@ export class ApiError extends Error {
   readonly traceId?: string
   readonly correlationId?: string
   readonly fieldErrors: Array<{ field?: string; message: string }>
+  /**
+   * Structured payload the server attached to this specific error code.
+   *
+   * Deliberately typed as `unknown` values: it is server-shaped data that
+   * varies per code, so reading it should go through a narrowing helper
+   * (`detailString` below) rather than a cast at the call site.
+   */
+  readonly details: Record<string, unknown>
   readonly retryable: boolean
   readonly retryAfterMs?: number
   readonly attempt: number
@@ -86,6 +96,7 @@ export class ApiError extends Error {
     this.traceId = ctx.traceId
     this.correlationId = ctx.correlationId
     this.fieldErrors = ctx.fieldErrors ?? []
+    this.details = ctx.details ?? {}
     this.retryable = ctx.retryable
     this.retryAfterMs = ctx.retryAfterMs
     this.attempt = ctx.attempt ?? 1
@@ -108,6 +119,31 @@ export class ApiError extends Error {
 
   get isAuthError(): boolean {
     return this.kind === 'unauthenticated'
+  }
+
+  /**
+   * Matches the server's stable error code or key — `is('AUTH_010')` or
+   * `is('auth.mfa_required')`, whichever the caller has to hand.
+   *
+   * Codes are the only part of a failure that is safe to branch on. Status
+   * alone is too coarse (the MFA challenge and a wrong password are both
+   * 401, and treating them the same tells a user with 2FA that their
+   * password is wrong), and `message` is prose that will be reworded.
+   */
+  is(code: string): boolean {
+    return this.code === code
+  }
+
+  /**
+   * Reads a string out of `details`, or undefined if it isn't one.
+   *
+   * Narrows rather than casts because `details` is server-shaped: a missing
+   * or renamed field should read as absent at the call site, not explode
+   * halfway through a flow.
+   */
+  detailString(key: string): string | undefined {
+    const value = this.details[key]
+    return typeof value === 'string' && value.length > 0 ? value : undefined
   }
 
   /** Worth sending to error tracking? Cancellations and expected 4xx aren't. */
@@ -149,7 +185,16 @@ export class ApiError extends Error {
     }
   }
 
-  /** Flat, redaction-safe shape for logs and telemetry. */
+  /**
+   * Flat, redaction-safe shape for logs and telemetry.
+   *
+   * `details` is deliberately excluded. It carries whatever the server
+   * attached to the code, and for at least one code (`AUTH_010`) that is a
+   * live credential — the MFA challenge token. An error object that reaches
+   * the console, a log drain, and an error tracker must not be the thing
+   * that leaks it, so it is opt-in at the call site rather than serialised
+   * by default.
+   */
   toJSON(): Record<string, unknown> {
     return {
       name: this.name,
@@ -222,16 +267,20 @@ export function fromFailureEnvelope(
   failure: ApiFailure,
   ctx: { status: number; requestId?: string; method?: string; operation?: string; attempt?: number; retryAfterMs?: number },
 ): ApiError {
-  const kind = kindForStatus(ctx.status || failure.statusCode)
+  // The HTTP status wins over the envelope's own `statusCode`: the latter is
+  // optional and absent on hand-rolled failure bodies (see ApiFailure).
+  const status = ctx.status || failure.statusCode || 0
+  const kind = kindForStatus(status)
 
   return new ApiError({
     kind,
-    status: ctx.status || failure.statusCode,
+    status,
     message: failure.message || 'Request failed',
     code: failure.code ?? failure.key,
     requestId: ctx.requestId,
     correlationId: failure.correlationId,
     fieldErrors: failure.errors,
+    details: failure.details,
     retryable: isRetryableKind(kind),
     retryAfterMs: ctx.retryAfterMs,
     attempt: ctx.attempt,

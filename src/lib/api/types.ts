@@ -29,12 +29,29 @@ export interface ApiSuccess<T> {
 
 export interface ApiFailure {
   success: false
-  statusCode: number
+  /**
+   * Absent on hand-rolled failure responses. `auth.routes.ts` builds the
+   * MFA-required body inline rather than throwing through the global error
+   * handler, and omits this field — so never rely on it when the HTTP status
+   * is available.
+   */
+  statusCode?: number
   message: string
   code?: string
   key?: string
   correlationId?: string
   errors?: Array<{ field?: string; message: string }>
+  /**
+   * Structured payload attached to a specific error code, carried through to
+   * `ApiError.details`.
+   *
+   * This is not decoration: some failures are a *step in a flow* rather than
+   * a dead end, and the data needed to continue arrives here. The MFA
+   * challenge is the case that forced it — `POST /auth/login` answers 401
+   * `AUTH_010` with `{ mfaToken }` in this field, and without it the client
+   * has no way to complete the sign-in it just started.
+   */
+  details?: Record<string, unknown>
   timestamp: string
 }
 

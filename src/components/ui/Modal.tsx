@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { CloseIcon } from '@/components/icons'
 import { Button } from './Button'
@@ -38,6 +38,12 @@ const sizes = {
  */
 export function Modal({ open, onClose, title, description, children, footer, size = 'md' }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null)
+  // Ties the dialog to its own heading and description. A native <dialog>
+  // does not infer an accessible name from the markup inside it, so without
+  // these a screen reader announces "dialog" and nothing else — the user is
+  // told something opened but not what.
+  const titleId = useId()
+  const descriptionId = useId()
 
   useEffect(() => {
     const dialog = ref.current
@@ -76,6 +82,8 @@ export function Modal({ open, onClose, title, description, children, footer, siz
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
       onClick={(event) => {
         // Only the backdrop resolves to the dialog itself; anything inside the
         // panel has a child as its target.
@@ -96,8 +104,14 @@ export function Modal({ open, onClose, title, description, children, footer, siz
     >
       <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 className="text-[15px] leading-tight">{title}</h2>
-          {description && <p className="text-xs text-text-muted">{description}</p>}
+          <h2 id={titleId} className="text-[15px] leading-tight">
+            {title}
+          </h2>
+          {description && (
+            <p id={descriptionId} className="text-xs text-text-muted">
+              {description}
+            </p>
+          )}
         </div>
         <Button variant="ghost" size="sm" iconOnly onClick={onClose} aria-label="Close">
           <CloseIcon className="h-4 w-4" />

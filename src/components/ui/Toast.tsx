@@ -30,6 +30,9 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null)
 
+/** How many toasts can be on screen at once before the oldest are dropped. */
+const MAX_VISIBLE = 4
+
 const DURATIONS: Record<ToastTone, number> = {
   success: 4000,
   info: 5000,
@@ -69,7 +72,24 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         const next = [...current, { id, tone, message, detail: options?.detail }]
         // Cap the stack. A burst of failures — a bulk action against a down
         // API — would otherwise cover the screen with toasts.
-        return next.slice(-4)
+        const capped = next.slice(-MAX_VISIBLE)
+
+        /*
+         * Cancel the timers of anything the cap just dropped. Without this
+         * each evicted toast keeps a live timeout that fires minutes later
+         * into a `setToasts` which changes nothing but still re-renders every
+         * subscriber — during exactly the failure burst the cap exists to
+         * contain.
+         */
+        for (const dropped of next.slice(0, next.length - capped.length)) {
+          const timer = timers.current.get(dropped.id)
+          if (timer) {
+            clearTimeout(timer)
+            timers.current.delete(dropped.id)
+          }
+        }
+
+        return capped
       })
 
       timers.current.set(

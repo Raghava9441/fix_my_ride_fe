@@ -1,58 +1,59 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, type ApiError } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth/store'
-import { setAccessToken, setRefreshToken } from '@/lib/auth/tokenStore'
 import type { Account } from '@/features/accounts/types'
-import { authService, type MfaSetupResult, type RegisterInput } from './service'
-
-export function useRegister() {
-  return useMutation<{ accountId?: string; requiresVerification?: boolean }, ApiError, RegisterInput>({
-    mutationKey: ['auth', 'register'],
-    mutationFn: (input) => authService.register(input),
-  })
-}
+import {
+  authService,
+  type MfaSetupResult,
+  type RegisterInput,
+  type RegisterResult,
+} from './service'
 
 /**
- * Completes an MFA challenge and establishes the session.
+ * Write hooks for auth.
  *
- * Tokens are stored before the session is read, because `/auth/me` needs the
- * new access token in its header — reading first would call it unauthenticated
- * and fail.
+ * One rule runs through all of them: **nothing here writes a token.** Every
+ * endpoint that mints a session hands its tokens to `useAuthStore
+ * .adoptSession()`, which is the only code path that touches the token store
+ * and reads `/auth/me`. Two places that can write tokens is how a session
+ * ends up half-established — credentials stored, no user loaded, guards
+ * disagreeing with the API about who is signed in.
  */
-export function useVerifyMfa() {
-  const refreshSession = useAuthStore((s) => s.refreshSession)
 
-  return useMutation<
-    { accessToken: string; refreshToken: string },
-    ApiError,
-    { email: string; code: string }
-  >({
-    mutationKey: ['auth', 'verify-mfa'],
-    mutationFn: (input) => authService.verifyMfa(input),
-    onSuccess: async (tokens) => {
-      setAccessToken(tokens.accessToken)
-      setRefreshToken(tokens.refreshToken)
-      await refreshSession()
-    },
+/**
+ * Registration, which **signs the new account in**.
+ *
+ * `POST /auth/register` returns a token pair, not a "check your email"
+ * acknowledgement — the account is usable immediately and email verification
+ * is a separate, later step. Anything that treats registration as a dead end
+ * ending on a confirmation screen is contradicting the API.
+ */
+export function useRegister() {
+  const adoptSession = useAuthStore((s) => s.adoptSession)
+
+  return useMutation<RegisterResult, ApiError, RegisterInput>({
+    mutationKey: ['auth', 'register'],
+    mutationFn: (input) => authService.register(input),
+    onSuccess: (result) => adoptSession(result),
   })
 }
 
 export function useForgotPassword() {
-  return useMutation<{ sent: boolean }, ApiError, string>({
+  return useMutation<null, ApiError, string>({
     mutationKey: ['auth', 'forgot-password'],
     mutationFn: (email) => authService.forgotPassword(email),
   })
 }
 
 export function useResetPassword() {
-  return useMutation<{ reset: boolean }, ApiError, { token: string; password: string }>({
+  return useMutation<null, ApiError, { token: string; password: string }>({
     mutationKey: ['auth', 'reset-password'],
     mutationFn: (input) => authService.resetPassword(input),
   })
 }
 
 export function useResendVerification() {
-  return useMutation<{ sent: boolean }, ApiError, string>({
+  return useMutation<null, ApiError, string>({
     mutationKey: ['auth', 'resend-verification'],
     mutationFn: (email) => authService.resendVerification(email),
   })
@@ -83,7 +84,7 @@ export function useUpdateProfile() {
  * would go.
  */
 export function useChangePassword() {
-  return useMutation<{ changed: boolean }, ApiError, { currentPassword: string; newPassword: string }>({
+  return useMutation<null, ApiError, { currentPassword: string; newPassword: string }>({
     mutationKey: ['auth', 'change-password'],
     mutationFn: (input) => authService.changePassword(input),
   })
@@ -99,7 +100,7 @@ export function useSetupMfa() {
 export function useEnableMfa() {
   const refreshSession = useAuthStore((s) => s.refreshSession)
 
-  return useMutation<{ enabled: boolean }, ApiError, string>({
+  return useMutation<null, ApiError, string>({
     mutationKey: ['auth', 'mfa-enable'],
     mutationFn: (code) => authService.enableMfa(code),
     // `mfaEnabled` lives on the session and drives the security screen.
@@ -107,10 +108,11 @@ export function useEnableMfa() {
   })
 }
 
+/** Takes a current TOTP code — the endpoint does not re-check a password. */
 export function useDisableMfa() {
   const refreshSession = useAuthStore((s) => s.refreshSession)
 
-  return useMutation<{ disabled: boolean }, ApiError, { password?: string; code?: string }>({
+  return useMutation<null, ApiError, { code: string }>({
     mutationKey: ['auth', 'mfa-disable'],
     mutationFn: (input) => authService.disableMfa(input),
     onSuccess: () => refreshSession(),
@@ -125,7 +127,7 @@ export function useDisableMfa() {
  * of the session, readable by anything with a `queryClient` reference.
  */
 export function useRegenerateBackupCodes() {
-  return useMutation<{ codes: string[] }, ApiError, void>({
+  return useMutation<{ backupCodes: string[] }, ApiError, void>({
     mutationKey: ['auth', 'mfa-backup-codes'],
     mutationFn: () => authService.regenerateBackupCodes(),
   })

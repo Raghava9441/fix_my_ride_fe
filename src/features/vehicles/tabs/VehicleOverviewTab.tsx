@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
+import { formatCurrency } from '@/components/charts'
 import {
   Badge,
   Button,
@@ -140,7 +141,7 @@ export default function VehicleOverviewTab() {
             onEdit={() => setEditing('insurance')}
             extra={
               insurance.data?.premium
-                ? [{ label: 'Premium', value: insurance.data.premium.toLocaleString() }]
+                ? [{ label: 'Premium', value: formatCurrency(insurance.data.premium) }]
                 : []
             }
           />
@@ -249,7 +250,14 @@ export default function VehicleOverviewTab() {
                   { label: 'Services', value: stats.data.serviceCount },
                   {
                     label: 'Total service cost',
-                    value: stats.data.totalServiceCost?.toLocaleString(),
+                    // Neither `/vehicles/:id/stats` nor `/vehicles/:id/insurance`
+                    // returns a currency, so both fall back to the app default.
+                    // `toLocaleString()` here rendered a bare number — "12,500"
+                    // with no indication of what it was denominated in.
+                    value:
+                      stats.data.totalServiceCost != null
+                        ? formatCurrency(stats.data.totalServiceCost)
+                        : undefined,
                   },
                   {
                     label: 'Average interval',

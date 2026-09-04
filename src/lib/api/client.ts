@@ -108,7 +108,21 @@ async function attemptWithAuth<T>(params: {
   }
 }
 
-async function execute<T>(options: RequestOptions, signal: AbortSignal): Promise<ApiResponse<T>> {
+/**
+ * `onAttempt` reports the attempt number as each one begins.
+ *
+ * The success path needs it because nothing else can supply it: an
+ * `ApiResponse` carries no attempt count, so `request()` used to record
+ * `retries: 0` for every call that succeeded *after* retrying — which meant
+ * the retry metrics said the API never needed a retry, the exact signal the
+ * retry budget exists to surface. The failure path reads `error.attempt`
+ * instead and was always correct.
+ */
+async function execute<T>(
+  options: RequestOptions,
+  signal: AbortSignal,
+  onAttempt?: (attempt: number) => void,
+): Promise<ApiResponse<T>> {
   const method = options.method ?? 'GET'
   const operation = resolveOperation(method, options.url, options.operation)
   const maxRetries = options.maxRetries ?? API_CONFIG.retry.maxRetries
@@ -117,6 +131,7 @@ async function execute<T>(options: RequestOptions, signal: AbortSignal): Promise
   let refreshed = false
 
   for (;;) {
+    onAttempt?.(attempt)
     try {
       // Annotated explicitly: `attemptWithAuth` recurses after a refresh, and
       // without this TS can't close the loop on its own inferred type.
@@ -177,7 +192,9 @@ export async function request<T>(options: RequestOptions): Promise<ApiResponse<T
   let status = 0
 
   const run = (signal: AbortSignal) =>
-    execute<T>(options, signal).then((response) => {
+    execute<T>(options, signal, (attempt) => {
+      attempts = attempt
+    }).then((response) => {
       requestId = response.requestId
       status = response.status
       return response

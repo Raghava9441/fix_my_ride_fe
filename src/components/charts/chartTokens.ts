@@ -78,12 +78,26 @@ export function humanizeServiceType(type: string): string {
 }
 
 /**
+ * Fallback when a response carries no currency of its own.
+ *
+ * One constant because there were two: `formatCurrency` defaulted to `INR`
+ * while every call site fell back to `'USD'`, so the same screen could label
+ * a per-record amount in one currency and its own total in another depending
+ * on which value happened to be missing.
+ *
+ * This is a fallback, not a setting. The real source is the tenant's
+ * configured currency; wire it through here when workspace settings are
+ * built, and every amount in the app follows.
+ */
+export const DEFAULT_CURRENCY = 'INR'
+
+/**
  * Compact currency for axis ticks and tiles: 12400 → "₹12.4k".
  *
  * Charts need the short form so labels don't collide; the tooltip shows the
  * exact figure, which is where precision belongs.
  */
-export function formatCompactCurrency(value: number, currency = 'INR'): string {
+export function formatCompactCurrency(value: number, currency = DEFAULT_CURRENCY): string {
   const symbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : ''
   const abs = Math.abs(value)
 
@@ -93,16 +107,28 @@ export function formatCompactCurrency(value: number, currency = 'INR'): string {
   return `${symbol}${Math.round(value)}`
 }
 
-export function formatCurrency(value: number, currency = 'INR'): string {
+/**
+ * An exact money amount — invoice lines, parts, labour, totals.
+ *
+ * Fraction digits are left to `Intl` so each currency gets its own correct
+ * minor unit: 2 for INR and USD, 0 for JPY, 3 for KWD. Hard-coding 2 would be
+ * wrong in the same way hard-coding 0 was.
+ *
+ * That is the bug this replaces. It previously passed `maximumFractionDigits:
+ * 0`, which is right for an axis tick and wrong for anything transactional: a
+ * ₹12.50 part rendered as "₹13", and a line of "₹13 × 2 = ₹25" put arithmetic
+ * on screen that does not add up. Compact display is a *separate* concern and
+ * already had its own function — see `formatCompactCurrency`, which is what
+ * charts and KPI tiles should use.
+ */
+export function formatCurrency(value: number, currency = DEFAULT_CURRENCY): string {
   try {
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(value)
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value)
   } catch {
-    // An unrecognised currency code shouldn't blank out a KPI tile.
-    return `${value.toLocaleString()}`
+    // An unrecognised currency code shouldn't blank out a whole panel. Keep
+    // the number and lead with the raw code, so the amount stays readable and
+    // the misconfiguration is visible rather than silent.
+    return `${currency} ${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
   }
 }
 

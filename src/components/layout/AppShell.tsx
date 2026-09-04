@@ -5,6 +5,7 @@ import { Button } from '@/components/ui'
 import { useFlag } from '@/lib/flags/FlagsProvider'
 import { usePreferences } from '@/lib/preferences/PreferencesProvider'
 import { useDocumentTitle } from '@/lib/routing'
+import { AccountStatusBanner } from './AccountStatusBanner'
 import { Breadcrumbs } from './Breadcrumbs'
 import { CommandPalette } from './CommandPalette'
 import { SideNav } from './SideNav'
@@ -116,6 +117,7 @@ export function AppShell() {
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 overflow-y-auto focus:outline-none">
           <div className="mx-auto flex w-full max-w-[var(--layout-content-max)] flex-col gap-4 p-4 md:p-6">
             <Breadcrumbs />
+            <AccountStatusBanner />
             <Outlet />
           </div>
         </main>

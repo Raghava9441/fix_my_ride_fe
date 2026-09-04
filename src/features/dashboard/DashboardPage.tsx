@@ -6,6 +6,7 @@ import {
   BarList,
   StatusBar,
   TrendAreaChart,
+  DEFAULT_CURRENCY,
   formatCompactCurrency,
   formatCurrency,
   humanizeServiceType,
@@ -70,7 +71,7 @@ export default function DashboardPage() {
   // Comes from the payload rather than being assumed: hardcoding one here
   // rendered aggregate totals in a different currency from the per-record
   // costs listed directly beneath them.
-  const currency = data?.currency ?? 'USD'
+  const currency = data?.currency ?? DEFAULT_CURRENCY
 
   const greeting = session?.name || session?.email.split('@')[0] || 'there'
 
@@ -166,7 +167,10 @@ export default function DashboardPage() {
         <KpiTile
           label="Revenue"
           kpi={kpis?.revenue}
-          format={(v) => formatCurrency(v, currency)}
+          // Compact, not exact: a KPI tile is a headline figure read at a
+          // glance, and "₹12,45,780.00" in a 6-across grid wraps and buries
+          // the number it exists to show.
+          format={(v) => formatCompactCurrency(v, currency)}
           icon={CardIcon}
           trend={revenueSeries}
           loading={isLoading}
@@ -175,7 +179,7 @@ export default function DashboardPage() {
         <KpiTile
           label="Avg. repair order"
           kpi={kpis?.averageRepairOrder}
-          format={(v) => formatCurrency(v, currency)}
+          format={(v) => formatCompactCurrency(v, currency)}
           icon={ChartIcon}
           loading={isLoading}
         />
@@ -250,7 +254,7 @@ export default function DashboardPage() {
                     label: humanizeServiceType(t.serviceType),
                     value: t.count,
                     display: `${t.count}`,
-                    meta: t.revenue > 0 ? formatCurrency(t.revenue, currency) : undefined,
+                    meta: t.revenue > 0 ? formatCompactCurrency(t.revenue, currency) : undefined,
                   }))}
                   emptyMessage="No jobs recorded in this period."
                 />

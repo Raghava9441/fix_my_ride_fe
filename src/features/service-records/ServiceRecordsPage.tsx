@@ -11,7 +11,7 @@ import {
   SkeletonRows,
 } from '@/components/ui'
 import { WrenchIcon } from '@/components/icons'
-import { STATUS_STYLES, formatCurrency, humanizeServiceType } from '@/components/charts'
+import { DEFAULT_CURRENCY, STATUS_STYLES, formatCurrency, humanizeServiceType } from '@/components/charts'
 import { Can, PERMISSIONS, access } from '@/lib/access'
 import { isPopulated } from '@/lib/api'
 import { asApiError } from '@/lib/queryClient'
@@ -71,7 +71,7 @@ export default function ServiceRecordsPage() {
     setPage(1)
   }
 
-  const currency = records[0]?.cost?.currency ?? 'USD'
+  const currency = records[0]?.cost?.currency ?? DEFAULT_CURRENCY
   const pageTotal = records.reduce((sum, r) => sum + (r.cost?.total ?? 0), 0)
 
   return (

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { Badge, Button, Card, CardBody, CardHeader, EmptyState } from '@/components/ui'
 import { WrenchIcon } from '@/components/icons'
-import { STATUS_STYLES, formatCurrency, humanizeServiceType } from '@/components/charts'
+import { DEFAULT_CURRENCY, STATUS_STYLES, formatCurrency, humanizeServiceType } from '@/components/charts'
 import { asApiError } from '@/lib/queryClient'
 import { to } from '@/lib/routing'
 import { useVehicleServiceRecords } from '../api'
@@ -26,7 +26,7 @@ export default function VehicleServiceHistoryTab() {
   // Running total across the visible page, so the numbers add up to what's
   // on screen rather than to a figure the user can't verify.
   const pageTotal = records.reduce((sum, record) => sum + (record.cost?.total ?? 0), 0)
-  const currency = records[0]?.cost?.currency ?? 'USD'
+  const currency = records[0]?.cost?.currency ?? DEFAULT_CURRENCY
 
   return (
     <Card className={isPlaceholderData ? 'opacity-60 transition-opacity' : undefined}>
