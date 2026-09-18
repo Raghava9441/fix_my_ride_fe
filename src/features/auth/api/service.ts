@@ -61,15 +61,23 @@ export interface MfaVerifyResult {
 
 export interface MfaSetupResult {
   /**
-   * `otpauth://` URI for the authenticator app. On a phone this is tappable
-   * and opens the app directly.
+   * `otpauth://` URI for the authenticator app, built server-side so the
+   * issuer and label stay the server's business. On a phone this is
+   * tappable and opens the app directly.
    */
   otpauthUrl: string
   /**
-   * Base32 shared secret, for manual entry when scanning isn't possible.
+   * The shared secret as stored — **hex**, not base32.
    *
-   * A live credential: shown once, never persisted client-side, and never
-   * logged — `redact()` strips `secret`-keyed fields at the logging sink.
+   * Not interchangeable with the secret inside `otpauthUrl`, which is the
+   * same bytes base32-encoded because that is the only form authenticator
+   * apps accept. Showing this string for manual entry would produce an
+   * enrolment whose codes never match — use `manualEntryKey(otpauthUrl)`
+   * from `features/settings/security/otpauth.ts`, which reads the base32
+   * form back out of the URI rather than duplicating it in a second field.
+   *
+   * A live credential either way: shown once, never persisted client-side,
+   * and never logged — `redact()` strips `secret`-keyed fields at the sink.
    */
   secret: string
   /** Single-use recovery codes. Shown once and not retrievable again. */
