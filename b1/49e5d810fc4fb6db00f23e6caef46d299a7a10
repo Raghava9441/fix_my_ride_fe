@@ -1,0 +1,39 @@
+src/features/tenants/api/service.ts
+  s_b7e1d198fc1e98::t_e546fa5e7ee10e 5,7-11
+src/features/settings/security/MfaCard.tsx
+  s_6d0dcd74f73904::t_e4604b8fcf16d4 313
+  s_6d0dcd74f73904::t_fbfb2a332c70ea 187-192
+  s_6d0dcd74f73904::t_56f8166d7ec724 270-275
+src/features/tenants/api/index.ts
+  s_b7e1d198fc1e98::t_047b44d13cd39e 1-3
+src/features/tenants/api/queries.ts
+  s_b7e1d198fc1e98::t_e546fa5e7ee10e 3
+src/main.tsx
+  s_b7e1d198fc1e98::t_13a05690086a78 7,9
+src/features/tenants/api/mutations.ts
+  s_b7e1d198fc1e98::t_047b44d13cd39e 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b149e5d810fc4fb6db00f23e6caef46d299a7a10",
+  "prompts": {},
+  "sessions": {
+    "s_6d0dcd74f73904": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d05c5b4f-5646-4fd3-99be-a816154c6e97",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Raghava9441 <raghavendrareddybollapu556@gmail.com>"
+    },
+    "s_b7e1d198fc1e98": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "91cb1339-5a4e-4f2c-a5c4-99710e206f8c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Raghava9441 <raghavendrareddybollapu556@gmail.com>"
+    }
+  }
+}
