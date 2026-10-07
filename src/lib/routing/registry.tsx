@@ -311,6 +311,35 @@ export const routeManifest: AppRoute[] = [
         title: 'Customer',
         access: access.permission(P.vehicle.readAll),
         component: () => import('@/features/owners/OwnerDetailPage'),
+        children: [
+          {
+            id: 'owners.detail.overview',
+            index: true,
+            component: () => import('@/features/owners/tabs/OwnerOverviewTab'),
+            breadcrumb: false,
+          },
+          {
+            id: 'owners.detail.vehicles',
+            path: ROUTE_PATHS.ownerVehicles,
+            title: 'Vehicles',
+            access: access.permission(P.vehicle.read),
+            component: () => import('@/features/owners/tabs/OwnerVehiclesTab'),
+          },
+          {
+            id: 'owners.detail.serviceHistory',
+            path: ROUTE_PATHS.ownerServiceHistory,
+            title: 'Service history',
+            access: access.permission(P.serviceRecord.read),
+            component: () => import('@/features/owners/tabs/OwnerServiceHistoryTab'),
+          },
+          {
+            id: 'owners.detail.expenses',
+            path: ROUTE_PATHS.ownerExpenses,
+            title: 'Spending',
+            access: access.permission(P.vehicle.readAll),
+            component: () => import('@/features/owners/tabs/OwnerExpensesTab'),
+          },
+        ],
       },
       {
         id: 'invitations',

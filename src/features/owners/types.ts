@@ -46,9 +46,19 @@ export interface UpdateOwnerInput {
   preferredServiceCenterId?: Id
 }
 
+/**
+ * What `GET /owners/:id/expenses` actually answers with.
+ *
+ * `breakdown` is keyed by service type — `{ maintenance: 486, repair: 120 }`
+ * — not by month. An earlier guess here declared `byMonth`, which the
+ * endpoint has never sent: a field that is always `undefined` reads at the
+ * call site as "this customer has no monthly data" rather than "nobody has
+ * ever returned this", so the branch behind it is dead and silently so. The
+ * index signature stays for fields the API adds later.
+ */
 export interface OwnerExpenses {
   total?: number
   currency?: string
-  byMonth?: Array<{ month: string; total: number }>
+  breakdown?: Record<string, number>
   [key: string]: unknown
 }
