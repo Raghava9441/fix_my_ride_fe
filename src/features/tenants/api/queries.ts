@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/api'
-import { onboardingService, tenantService } from './service'
+import { tenantService } from './service'
 
 /**
  * The signed-in user's workspace.
@@ -14,14 +14,6 @@ export function useMyTenant(options?: { enabled?: boolean }) {
     queryKey: queryKeys.tenant.me(),
     queryFn: ({ signal }) => tenantService.me(signal),
     staleTime: 10 * 60_000,
-    enabled: options?.enabled ?? true,
-  })
-}
-
-export function useOnboardingStatus(options?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: queryKeys.session.onboardingStatus(),
-    queryFn: ({ signal }) => onboardingService.status(signal),
     enabled: options?.enabled ?? true,
   })
 }

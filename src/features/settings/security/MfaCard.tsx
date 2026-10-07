@@ -184,7 +184,12 @@ export function MfaCard({ mfaEnabled }: { mfaEnabled: boolean }) {
             : 'Add the key below to your authenticator app, then enter the code it shows.'
         }
       >
-        {savedCodes ? (
+        {/* `Modal` renders a native <dialog> and keeps its children mounted
+            when closed, so this has to short-circuit on `enrolment` rather
+            than rely on `open`. Otherwise a closed enrolment leaves its form
+            — and the "setup key missing" branch it falls into once the
+            secret is cleared — sitting in the DOM. */}
+        {enrolment === null ? null : savedCodes ? (
           <BackupCodeList codes={savedCodes} onAcknowledge={closeEnrolment} />
         ) : (
           <form className="flex flex-col gap-4" onSubmit={submitEnrolment} noValidate>
@@ -262,6 +267,12 @@ export function MfaCard({ mfaEnabled }: { mfaEnabled: boolean }) {
         description="Enter a current code from your authenticator app to confirm."
         size="sm"
       >
+        {/* Guarded for the same reason as the enrolment modal, and with one
+            extra stake: a second mounted `one-time-code` field is exactly
+            what iOS autofill and password managers offer a code to, and
+            filling the hidden one looks to the user like autofill silently
+            doing nothing. */}
+        {!disableOpen ? null : (
         <form className="flex flex-col gap-4" onSubmit={submitDisable} noValidate>
           <Alert tone="warning">
             Your account will be protected by its password alone, and your recovery codes
@@ -299,6 +310,7 @@ export function MfaCard({ mfaEnabled }: { mfaEnabled: boolean }) {
             </Button>
           </div>
         </form>
+        )}
       </Modal>
 
       {/* ---------------- regenerate recovery codes ---------------- */}

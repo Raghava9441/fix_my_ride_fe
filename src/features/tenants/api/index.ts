@@ -1,4 +1,3 @@
-export { tenantService, onboardingService } from './service'
-export type { OnboardingSignupInput, OnboardingStatus } from './service'
-export { useMyTenant, useOnboardingStatus } from './queries'
-export { useUpdateMyTenant, useOnboardingSignup } from './mutations'
+export { tenantService } from './service'
+export { useMyTenant } from './queries'
+export { useUpdateMyTenant } from './mutations'
