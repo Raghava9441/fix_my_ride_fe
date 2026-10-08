@@ -1,0 +1,59 @@
+src/features/staff/tabs/StaffOverviewTab.tsx
+  s_b7e1d198fc1e98::t_fe3a5557c14585 1-219
+src/features/staff/StaffDetailPage.tsx
+  s_b7e1d198fc1e98::t_22111a9f0c57d1 1-35,37-55,57-121,132-179,181-204,208-257
+  s_b7e1d198fc1e98::t_e57d2e29ffd12d 122-129
+  s_b7e1d198fc1e98::t_9e38a71983d687 180
+  s_b7e1d198fc1e98::t_cc0e1289f3e9a9 205-207
+src/features/staff/api/index.ts
+  s_b7e1d198fc1e98::t_7e00a847bc94d8 9
+src/lib/routing/paths.ts
+  s_b7e1d198fc1e98::t_fcf2180a461cca 61-63,170-172
+src/features/staff/tabs/StaffServicesTab.tsx
+  s_b7e1d198fc1e98::t_aa8b757866b664 1-108
+src/features/staff/components/StaffListHeader.tsx
+  s_b7e1d198fc1e98::t_6ba7f846d56b7f 1-26
+src/lib/routing/registry.tsx
+  s_b7e1d198fc1e98::t_6a402f2c0f65e3 298-329
+src/features/staff/api/mutations.ts
+  s_b7e1d198fc1e98::t_a3875ed46bd91c 90-100,104,107-111
+src/features/staff/components/StaffRow.tsx
+  s_b7e1d198fc1e98::t_5a3637caaeaba1 1-96
+src/features/staff/api/queries.ts
+  s_b7e1d198fc1e98::t_7e00a847bc94d8 1-2,55-75
+src/features/staff/components/EditStaffDialog.tsx
+  s_b7e1d198fc1e98::t_6e20feef12f76a 1-189
+src/features/staff/StaffPage.tsx
+  s_b7e1d198fc1e98::t_881692cdeb1270 143
+  s_b7e1d198fc1e98::t_bd305e22aa5e9b 1-23,25-38,40-75,77-103,114-142,144-190
+  s_b7e1d198fc1e98::t_b179dc2faba293 104-113
+src/features/staff/staffMember.ts
+  s_b7e1d198fc1e98::t_d393363c9cd662 1-144
+src/features/staff/tabs/StaffScheduleTab.tsx
+  s_b7e1d198fc1e98::t_c14434e257bd2a 1
+  s_b7e1d198fc1e98::t_55989ce8927a55 2-32,34-35,39,46,51-117,122-203
+  s_b7e1d198fc1e98::t_3fd5422c58b0a7 33,36-38,40-45,47-50
+  s_b7e1d198fc1e98::t_16ff4bf4b343f2 118-121
+src/features/staff/tabs/StaffPermissionsTab.tsx
+  s_b7e1d198fc1e98::t_691da215600ab8 1-351
+src/features/staff/api/service.ts
+  s_b7e1d198fc1e98::t_5766d73bbf59d1 78-88,90-94
+src/features/staff/components/AddStaffDialog.tsx
+  s_b7e1d198fc1e98::t_3eb42f231216bb 1-206
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e19627791472a47a442f84b25d234af75506d26c",
+  "prompts": {},
+  "sessions": {
+    "s_b7e1d198fc1e98": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "91cb1339-5a4e-4f2c-a5c4-99710e206f8c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Raghava9441 <raghavendrareddybollapu556@gmail.com>"
+    }
+  }
+}
