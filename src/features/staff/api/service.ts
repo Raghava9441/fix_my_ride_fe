@@ -75,10 +75,23 @@ export const staffService = {
     return api.get<WorkSchedule>(`${byId(id)}/schedule`, { signal, operation: 'staff.schedule' })
   },
 
+  /**
+   * Replaces the whole weekly schedule.
+   *
+   * The body is wrapped in `workSchedule` while `GET /schedule` answers with
+   * the bare object — `UpdateStaffScheduleSchema` requires the wrapper, and
+   * sending the schedule flat is a 422 with no clue as to why. The asymmetry
+   * is the API's; it is absorbed here so callers deal in one shape.
+   *
+   * The response is the updated `StaffProfile`, not a schedule: the endpoint
+   * returns the whole document it just saved.
+   */
   updateSchedule(id: string, input: WorkSchedule) {
-    return api.put<WorkSchedule>(`${byId(id)}/schedule`, input, {
-      operation: 'staff.updateSchedule',
-    })
+    return api.put<StaffProfile>(
+      `${byId(id)}/schedule`,
+      { workSchedule: input },
+      { operation: 'staff.updateSchedule' },
+    )
   },
 
   performance(id: string, filters: QueryParams = {}, signal?: AbortSignal) {

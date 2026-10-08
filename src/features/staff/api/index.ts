@@ -6,6 +6,7 @@ export {
   useStaffSchedule,
   useStaffPerformance,
   useStaffServices,
+  usePrefetchStaffMember,
 } from './queries'
 export {
   useCreateStaff,

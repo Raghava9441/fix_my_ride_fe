@@ -1,4 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useCallback } from 'react'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, type QueryParams } from '@/lib/api'
 import { staffService } from './service'
 import type { StaffListFilters } from '../types'
@@ -50,4 +51,25 @@ export function useStaffServices(id: string | undefined, filters: QueryParams = 
     queryFn: ({ signal }) => staffService.services(id!, filters, signal),
     enabled: Boolean(id),
   })
+}
+
+/**
+ * Warms a staff member's detail cache from the list, on hover or focus.
+ *
+ * `staleTime` is what makes it worth doing: without it the detail screen
+ * refetches on mount anyway and the prefetch is pure extra load.
+ */
+export function usePrefetchStaffMember() {
+  const queryClient = useQueryClient()
+
+  return useCallback(
+    (staffId: string) => {
+      void queryClient.prefetchQuery({
+        queryKey: queryKeys.staff.detail(staffId),
+        queryFn: ({ signal }) => staffService.get(staffId, signal),
+        staleTime: 60_000,
+      })
+    },
+    [queryClient],
+  )
 }

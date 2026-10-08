@@ -87,14 +87,28 @@ export function useRevokeStaffPermission(id: string) {
   })
 }
 
+/**
+ * Replaces the weekly schedule.
+ *
+ * The endpoint answers with the whole updated `StaffProfile`, so the
+ * schedule cache is seeded from `workSchedule` on it rather than from the
+ * response itself — writing the response straight in would park a profile
+ * document where every reader expects a week of days.
+ *
+ * The profile seeds the detail cache at the same time, since it is exactly
+ * the document that query holds and it just came back fresh.
+ */
 export function useUpdateStaffSchedule(id: string) {
   const queryClient = useQueryClient()
 
-  return useMutation<WorkSchedule, ApiError, WorkSchedule>({
+  return useMutation<StaffProfile, ApiError, WorkSchedule>({
     mutationKey: ['staff', 'update-schedule', id],
     mutationFn: (input) => staffService.updateSchedule(id, input),
-    onSuccess: (data) => {
-      queryClient.setQueryData(queryKeys.staff.schedule(id), data)
+    onSuccess: (staff, input) => {
+      // `?? input` covers an endpoint that answers without echoing the
+      // schedule back: the request succeeded, so what we sent is current.
+      queryClient.setQueryData(queryKeys.staff.schedule(id), staff?.workSchedule ?? input)
+      queryClient.setQueryData(queryKeys.staff.detail(id), staff)
     },
   })
 }

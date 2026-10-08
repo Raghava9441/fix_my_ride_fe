@@ -58,6 +58,9 @@ export const ROUTE_PATHS = {
   /* ---- people ---- */
   staff: '/staff',
   staffDetail: '/staff/:staffId',
+  staffSchedule: '/staff/:staffId/schedule',
+  staffPermissions: '/staff/:staffId/permissions',
+  staffServices: '/staff/:staffId/services',
   owners: '/owners',
   ownerDetail: '/owners/:ownerId',
   ownerVehicles: '/owners/:ownerId/vehicles',
@@ -164,6 +167,9 @@ export const to = {
   serviceCenterSettings: (serviceCenterId: string) =>
     buildPath(ROUTE_PATHS.serviceCenterSettings, { serviceCenterId }),
   staffDetail: (staffId: string) => buildPath(ROUTE_PATHS.staffDetail, { staffId }),
+  staffSchedule: (staffId: string) => buildPath(ROUTE_PATHS.staffSchedule, { staffId }),
+  staffPermissions: (staffId: string) => buildPath(ROUTE_PATHS.staffPermissions, { staffId }),
+  staffServices: (staffId: string) => buildPath(ROUTE_PATHS.staffServices, { staffId }),
   ownerDetail: (ownerId: string) => buildPath(ROUTE_PATHS.ownerDetail, { ownerId }),
   ownerVehicles: (ownerId: string) => buildPath(ROUTE_PATHS.ownerVehicles, { ownerId }),
   ownerServiceHistory: (ownerId: string) =>

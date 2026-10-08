@@ -295,6 +295,38 @@ export const routeManifest: AppRoute[] = [
         title: 'Staff member',
         access: access.permission(P.staffProfile.read),
         component: () => import('@/features/staff/StaffDetailPage'),
+        children: [
+          {
+            id: 'staff.detail.overview',
+            index: true,
+            component: () => import('@/features/staff/tabs/StaffOverviewTab'),
+            breadcrumb: false,
+          },
+          {
+            id: 'staff.detail.schedule',
+            path: ROUTE_PATHS.staffSchedule,
+            title: 'Schedule',
+            access: access.permission(P.staffProfile.read),
+            component: () => import('@/features/staff/tabs/StaffScheduleTab'),
+          },
+          {
+            /* Permission overrides are an administrative action, not part of
+               reading a profile — `manage` rather than `read`, so the tab is
+               absent for anyone who could not act on it anyway. */
+            id: 'staff.detail.permissions',
+            path: ROUTE_PATHS.staffPermissions,
+            title: 'Permissions',
+            access: access.permission(P.staffProfile.manage),
+            component: () => import('@/features/staff/tabs/StaffPermissionsTab'),
+          },
+          {
+            id: 'staff.detail.services',
+            path: ROUTE_PATHS.staffServices,
+            title: 'Jobs',
+            access: access.permission(P.serviceRecord.read),
+            component: () => import('@/features/staff/tabs/StaffServicesTab'),
+          },
+        ],
       },
       {
         id: 'owners',
