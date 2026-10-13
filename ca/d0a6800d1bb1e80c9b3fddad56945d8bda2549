@@ -1,0 +1,79 @@
+src/features/dashboard/KpiTile.tsx
+  s_081dc83181c0a0::t_e37bc5f4b636e2 6,17-18,39,41,48-51,82
+src/lib/hooks/useReducedMotion.ts
+  s_081dc83181c0a0::t_ed3a414f9b1135 1-28
+src/components/layout/AuthBackdrop.tsx
+  s_081dc83181c0a0::t_1e96172039d6a6 1-23
+src/lib/hooks/useReducedMotion.test.tsx
+  s_081dc83181c0a0::t_95c280ecd9dd3f 1-53
+src/components/three/ScanRing.tsx
+  s_081dc83181c0a0::t_73a7340bff8f4a 24
+  s_081dc83181c0a0::t_5b66c15c59b14b 1-23,25-34
+src/components/charts/BarList.tsx
+  s_081dc83181c0a0::t_e37bc5f4b636e2 43,54,58
+src/features/dashboard/DashboardPage.tsx
+  s_081dc83181c0a0::t_e37bc5f4b636e2 168,187-188,196,210-211
+  s_081dc83181c0a0::t_f18f0b59d009d5 180-186,204-209
+src/lib/routing/RouteFallback.tsx
+  s_081dc83181c0a0::t_a735e5c49c8609 13
+src/components/three/SceneCanvas.tsx
+  s_081dc83181c0a0::t_c8652d9390ba12 1-22,24-29
+  s_081dc83181c0a0::t_25ab9976715acb 23
+src/lib/hooks/useThemeColors.ts
+  s_081dc83181c0a0::t_625eb2dd19dae2 1
+  s_081dc83181c0a0::t_34d2f3ec2f3f1a 46-47,49-69
+  s_081dc83181c0a0::t_c0b8adab8a400c 2-45,48,70
+src/components/three/CarScene.tsx
+  s_081dc83181c0a0::t_91aa7fb07ca02a 3-4,10-12,14-16,18-20,22,25,32-46,48-61,64,71-72,76,87,93-123,125-141
+  s_081dc83181c0a0::t_870541b50f11bf 1-2,5-9,13,17,21,23-24,26-31,47,62-63,65-70,73-75,77-86,88-92,142-144
+  s_081dc83181c0a0::t_bf0f69ab895282 124
+src/lib/hooks/useWebGLSupport.test.ts
+  s_081dc83181c0a0::t_6b911e23bdcfa9 1-37
+src/components/three/Gear.tsx
+  s_081dc83181c0a0::t_699d7b938bacf1 1-63
+src/lib/hooks/useWebGLSupport.ts
+  s_081dc83181c0a0::t_6eb43a522731fa 1-42
+src/components/three/PlaceholderCar.tsx
+  s_081dc83181c0a0::t_53f87a529a2152 1-79
+src/styles/index.css
+  s_081dc83181c0a0::t_a735e5c49c8609 95-105,126-134,161,163-187,203-204
+  s_081dc83181c0a0::t_e37bc5f4b636e2 106-125,188-202
+  s_081dc83181c0a0::t_518eb0ecb94a7f 148-160,162
+src/components/charts/Sparkline.tsx
+  s_081dc83181c0a0::t_e37bc5f4b636e2 48
+src/components/charts/StatusBar.tsx
+  s_081dc83181c0a0::t_e37bc5f4b636e2 49,54-59
+src/lib/hooks/useCountUp.test.tsx
+  s_081dc83181c0a0::t_f18f0b59d009d5 1-68
+src/lib/hooks/useCountUp.ts
+  s_081dc83181c0a0::t_f18f0b59d009d5 1-39
+package.json
+  s_081dc83181c0a0::t_f6d216108d6d51 16-17,23,33
+src/components/layout/AuthLayout.tsx
+  s_081dc83181c0a0::t_5f7a743cd6748d 18-19
+  s_081dc83181c0a0::t_171aacac51d0f9 3
+src/components/three/FloatingParts.tsx
+  s_081dc83181c0a0::t_7e562fc3cda596 1-58
+src/components/layout/AppShell.tsx
+  s_081dc83181c0a0::t_a735e5c49c8609 121-126
+src/components/charts/TrendAreaChart.tsx
+  s_081dc83181c0a0::t_e37bc5f4b636e2 155
+package-lock.json
+  s_081dc83181c0a0::t_234c0e67ad4f58 11-12,18,28,246-250,729-744,1074-1164,2312-2316,2339-2343,2359-2363,2381-2427,2578-2596,2605-2627,2637-2648,2694-2723,2740,2810-2817,2833-2837,2945-2949,2964-2968,2975-2979,2992-3015,3022-3042,3098-3105,3379-3387,3403-3415,3500-3507,3569-3573,3588-3596,3667-3680,3789-3807,3829-3851,3876-3883,3909-3942,4040-4101,4130-4145,4503-4512,4545-4558
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cad0a6800d1bb1e80c9b3fddad56945d8bda2549",
+  "prompts": {},
+  "sessions": {
+    "s_081dc83181c0a0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1b54b5af-e26f-4cc5-94f0-135330558aa4",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Raghava9441 <raghavendrareddybollapu556@gmail.com>"
+    }
+  }
+}
