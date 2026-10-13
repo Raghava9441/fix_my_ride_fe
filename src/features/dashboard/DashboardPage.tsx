@@ -165,6 +165,7 @@ export default function DashboardPage() {
         }
       >
         <KpiTile
+          index={0}
           label="Revenue"
           kpi={kpis?.revenue}
           // Compact, not exact: a KPI tile is a headline figure read at a
@@ -175,8 +176,16 @@ export default function DashboardPage() {
           trend={revenueSeries}
           loading={isLoading}
         />
-        <KpiTile label="Jobs" kpi={kpis?.jobs} icon={WrenchIcon} trend={jobsSeries} loading={isLoading} />
         <KpiTile
+          index={1}
+          label="Jobs"
+          kpi={kpis?.jobs}
+          icon={WrenchIcon}
+          trend={jobsSeries}
+          loading={isLoading}
+        />
+        <KpiTile
+          index={2}
           label="Avg. repair order"
           kpi={kpis?.averageRepairOrder}
           format={(v) => formatCompactCurrency(v, currency)}
@@ -184,14 +193,22 @@ export default function DashboardPage() {
           loading={isLoading}
         />
         <KpiTile
+          index={3}
           label="Completion"
           kpi={kpis?.completionRate}
           format={(v) => `${v}%`}
           icon={ChartIcon}
           loading={isLoading}
         />
-        <KpiTile label="Vehicles" kpi={kpis?.activeVehicles} icon={VehicleIcon} loading={isLoading} />
         <KpiTile
+          index={4}
+          label="Vehicles"
+          kpi={kpis?.activeVehicles}
+          icon={VehicleIcon}
+          loading={isLoading}
+        />
+        <KpiTile
+          index={5}
           label={scope === 'platform' ? 'Accounts' : 'Customers'}
           kpi={kpis?.customers}
           icon={PersonIcon}

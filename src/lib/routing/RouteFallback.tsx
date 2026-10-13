@@ -10,6 +10,7 @@ export function RouteFallback({ label = 'Loading' }: { label?: string }) {
   return (
     <div className="flex flex-col gap-5 p-1" role="status" aria-live="polite" aria-busy="true">
       <span className="sr-only">{label}</span>
+      <div className="route-progress" aria-hidden="true" />
 
       <div className="flex flex-col gap-2">
         <div className="skeleton h-3 w-28" />

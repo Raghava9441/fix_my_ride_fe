@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router-dom'
 import { WrenchMark } from '@/components/icons'
+import { AuthBackdrop } from './AuthBackdrop'
 import { ROUTE_PATHS, useDocumentTitle } from '@/lib/routing'
 
 /**
@@ -14,7 +15,8 @@ export function AuthLayout() {
   useDocumentTitle()
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface-sunken">
+    <div className="relative isolate flex min-h-screen flex-col bg-surface-sunken">
+      <AuthBackdrop />
       <header className="flex items-center p-5">
         <Link to={ROUTE_PATHS.login} className="interactive flex items-center gap-2 rounded-input px-1 py-1">
           <span className="flex h-7 w-7 items-center justify-center rounded-[calc(var(--radius-card)/1.6)] bg-accent text-accent-contrast">

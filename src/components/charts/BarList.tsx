@@ -40,7 +40,7 @@ export function BarList({ items, emptyMessage = 'No data in this period.', class
 
   return (
     <ul className={`flex flex-col gap-2.5 ${className ?? ''}`}>
-      {items.map((item) => (
+      {items.map((item, i) => (
         <li key={item.label} className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-3">
             <span className="truncate text-xs font-medium text-text">{item.label}</span>
@@ -51,10 +51,11 @@ export function BarList({ items, emptyMessage = 'No data in this period.', class
 
           <div className="h-1.5 w-full overflow-hidden rounded-pill bg-surface-sunken">
             <div
-              className="h-full rounded-pill"
+              className="anim-grow-x h-full rounded-pill"
               style={{
                 width: `${Math.max((item.value / max) * 100, 2)}%`,
                 background: CHART_ACCENT,
+                animationDelay: `calc(${i * 70}ms * var(--motion-factor))`,
               }}
             />
           </div>

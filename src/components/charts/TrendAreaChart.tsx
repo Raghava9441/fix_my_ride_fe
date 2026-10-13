@@ -152,6 +152,7 @@ export function TrendAreaChart({
           <svg
             viewBox={`0 0 ${VB_W} ${VB_H}`}
             preserveAspectRatio="none"
+            className="anim-reveal-x"
             style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible' }}
             role="img"
             aria-label={`${valueLabel} over time`}

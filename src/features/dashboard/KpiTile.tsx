@@ -3,6 +3,7 @@ import type { ComponentType, SVGProps } from 'react'
 import { Card } from '@/components/ui'
 import { Sparkline } from '@/components/charts'
 import type { KpiDelta } from '@/features/reports/types'
+import { useCountUp } from '@/lib/hooks/useCountUp'
 
 interface KpiTileProps {
   label: string
@@ -13,6 +14,8 @@ interface KpiTileProps {
   loading?: boolean
   /** Set when a rise is bad (e.g. cancellations), so the colour flips. */
   inverse?: boolean
+  /** Position in the row, used to stagger the entrance. */
+  index?: number
 }
 
 /**
@@ -33,14 +36,19 @@ export function KpiTile({
   trend,
   loading,
   inverse,
+  index = 0,
 }: KpiTileProps) {
+  const animatedValue = useCountUp(kpi?.value ?? 0)
   const change = kpi?.changePct ?? null
   const rising = change !== null && change > 0
   const falling = change !== null && change < 0
   const good = inverse ? falling : rising
 
   return (
-    <Card className="group relative overflow-hidden p-4">
+    <Card
+      className="anim-rise group relative overflow-hidden p-4"
+      style={{ animationDelay: `calc(${index * 60}ms * var(--motion-factor))` }}
+    >
       {/* A very low-opacity accent wash that lifts on hover. Decorative only —
           it encodes nothing, so it stays well below text contrast. */}
       <div
@@ -71,7 +79,7 @@ export function KpiTile({
           <div className="skeleton h-8 w-24" />
         ) : (
           <div className="tabnum font-mono text-2xl font-semibold leading-none text-text">
-            {format(kpi?.value ?? 0)}
+            {format(animatedValue)}
           </div>
         )}
 

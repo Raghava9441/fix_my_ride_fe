@@ -46,13 +46,17 @@ export function StatusBar({ data, className }: StatusBarProps) {
         role="img"
         aria-label={segments.map((s) => `${s.label}: ${s.count}`).join(', ')}
       >
-        {segments.map((segment) => (
+        {segments.map((segment, i) => (
           <div
             key={segment.status}
             // `gap-0.5` supplies the surface gap between fills; without it two
             // adjacent statuses read as one longer band.
-            style={{ width: `${(segment.count / total) * 100}%`, background: segment.color }}
-            className="h-full first:rounded-l-pill last:rounded-r-pill"
+            style={{
+              width: `${(segment.count / total) * 100}%`,
+              background: segment.color,
+              animationDelay: `calc(${i * 80}ms * var(--motion-factor))`,
+            }}
+            className="anim-grow-x h-full first:rounded-l-pill last:rounded-r-pill"
           />
         ))}
       </div>

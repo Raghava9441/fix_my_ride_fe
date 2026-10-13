@@ -118,7 +118,12 @@ export function AppShell() {
           <div className="mx-auto flex w-full max-w-[var(--layout-content-max)] flex-col gap-4 p-4 md:p-6">
             <Breadcrumbs />
             <AccountStatusBanner />
-            <Outlet />
+            {/* Keyed on the top-level section only: moving between sections replays
+                the enter animation, but switching tabs inside a detail page
+                (/vehicles/:id/*) must not remount and replay the whole page. */}
+            <div key={location.pathname.split('/')[1] ?? ''} className="anim-page-in flex flex-col gap-4">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>

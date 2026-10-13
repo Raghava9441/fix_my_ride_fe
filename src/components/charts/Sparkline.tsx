@@ -45,7 +45,7 @@ export function Sparkline({ values, height = 34, className, ariaHidden = true }:
     <svg
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
-      className={className}
+      className={`anim-reveal-x ${className ?? ''}`}
       style={{ width: '100%', height, display: 'block' }}
       aria-hidden={ariaHidden}
     >
