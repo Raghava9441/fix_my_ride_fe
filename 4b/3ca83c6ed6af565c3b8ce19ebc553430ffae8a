@@ -1,0 +1,44 @@
+src/features/service-centers/api/queries.ts
+  s_ee81fcedbd37db::t_12142c6fcf0b27 1-2,94-108
+src/features/service-centers/tabs/CenterSettingsTab.tsx
+  s_ee81fcedbd37db::t_29fe26dd65c159 1-29,31-41,43-127,130-223,228-427,429-430
+  s_ee81fcedbd37db::t_1cf7ea308d8890 428
+src/features/service-centers/components/CreateServiceCenterDialog.tsx
+  s_ee81fcedbd37db::t_9882226ad1d032 1-51
+src/features/service-centers/tabs/CenterStaffTab.tsx
+  s_ee81fcedbd37db::t_18809ac4612a7d 1-10,12-18,20-31,33-90
+src/features/service-centers/components/ServiceCenterListHeader.tsx
+  s_ee81fcedbd37db::t_bac983c1bc65df 1-15
+src/features/service-centers/components/ServiceCenterRow.tsx
+  s_ee81fcedbd37db::t_8c277ed3660e26 1-74
+src/features/service-centers/components/EditServiceCenterDialog.tsx
+  s_ee81fcedbd37db::t_6ae78721cdb959 1-44
+src/features/service-centers/tabs/CenterOverviewTab.tsx
+  s_ee81fcedbd37db::t_656b07e60e2e6e 1-20,22-27,29-63,65-185
+src/features/service-centers/serviceCenter.ts
+  s_ee81fcedbd37db::t_e969963dd01d4a 1-73
+src/features/service-centers/ServiceCentersPage.tsx
+  s_ee81fcedbd37db::t_3eb69705dba6d1 1-22,24-34,36-70,72-187
+src/features/service-centers/ServiceCenterDetailPage.tsx
+  s_ee81fcedbd37db::t_21babf0aabef07 1-2,4-21,23-36,39-44,49-58,82-110,114-167,171-196,199-234
+src/features/service-centers/api/index.ts
+  s_ee81fcedbd37db::t_12142c6fcf0b27 14
+src/features/service-centers/components/ServiceCenterForm.tsx
+  s_ee81fcedbd37db::t_013acc976e7007 1-173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4b3ca83c6ed6af565c3b8ce19ebc553430ffae8a",
+  "prompts": {},
+  "sessions": {
+    "s_ee81fcedbd37db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d6660336-d934-4e5e-9f8e-454d04e6dedf",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Raghava9441 <raghavendrareddybollapu556@gmail.com>"
+    }
+  }
+}
