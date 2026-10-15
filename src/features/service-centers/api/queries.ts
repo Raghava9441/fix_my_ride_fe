@@ -1,4 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useCallback } from 'react'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, type QueryParams } from '@/lib/api'
 import { serviceCenterService } from './service'
 import type { NearbyFilters, ServiceCenterListFilters } from '../types'
@@ -89,4 +90,19 @@ export function useServiceCenterSettings(id: string | undefined) {
     queryFn: ({ signal }) => serviceCenterService.settings(id!, signal),
     enabled: Boolean(id),
   })
+}
+
+export function usePrefetchServiceCenter() {
+  const queryClient = useQueryClient()
+
+  return useCallback(
+    (id: string) => {
+      void queryClient.prefetchQuery({
+        queryKey: queryKeys.serviceCenters.detail(id),
+        queryFn: ({ signal }) => serviceCenterService.get(id, signal),
+        staleTime: 60_000,
+      })
+    },
+    [queryClient],
+  )
 }

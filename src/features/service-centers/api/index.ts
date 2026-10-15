@@ -11,6 +11,7 @@ export {
   useServiceCenterReviews,
   useServiceCenterDocuments,
   useServiceCenterSettings,
+  usePrefetchServiceCenter,
 } from './queries'
 
 export {
